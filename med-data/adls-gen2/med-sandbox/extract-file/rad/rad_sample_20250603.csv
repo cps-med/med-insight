@@ -1,0 +1,11 @@
+division_ien,patient_ien,patient_ssn,lname_4,in_out_patient,pat_xfer_date,cpt_code_mod,procedure,rad_location_ien,location_ien,service_section_ien,specialty_ien,placeholder22,placeholder23,placeholder24,stop_code,credit_method,placeholder_cerner,case_number,placeholder_new_mpi,placeholder_sigi
+1,PtIEN1001,123456789,Door,I,2025-01-01,7104501,"chest xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",101,"*","*"
+1,PtIEN1001,123456789,Door,I,2025-01-02,7104501,"chest xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",101,"*","*"
+2,PtIEN1002,987654321,Miif,O,2025-01-01,7311001,"wrist xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",102,"*","*"
+2,PtIEN1002,987654321,Miif,O,2025-01-02,7311001,"wrist xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",102,"*","*"
+1,PtIEN1003,111111111,Sool,I,2025-01-01,7356001,"knee1 xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",103,"*","*"
+1,PtIEN1003,111111111,Sool,I,2025-01-02,7356001,"knee1 xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",103,"*","*"
+1,PtIEN1004,111112222,Tiid,O,2025-01-05,7356001,"knee2 xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",104,"*","*"
+1,PtIEN1004,111112222,Tiid,O,2025-01-10,7356001,"knee2 xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",104,"*","*"
+2,PtIEN1005,111111105,Smit,I,2025-01-05,7311001,"wrist xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",105,"*","*"
+2,PtIEN1005,111111105,Smit,I,2025-01-10,7311001,"wrist xray",LOC111001,LOC111001,sec333001,spec55001,"*","*","*",204,0,"*",105,"*","*"

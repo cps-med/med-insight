@@ -1,0 +1,2 @@
+division_ien, patient_ien, patient_ssn, lname_4, in_out_patient, encounter_num,          visit_day,  placeholder_07, overbooked_ind, placeholder_09, treating_spec, visit_time
+1,            PtIEN1001,  "123456789",  Door,    I,              "12345678920250101I",   2025-01-01, "",             "",             "",             "A",           08:25:01
