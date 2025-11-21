@@ -10,8 +10,9 @@
 
 # Output directories (should be external to repo)
 med-output/
-extract/
-log/
+med-output/extract/
+med-output/log/
+med-output/sample/
 
 # VS Code config files
 .vscode
