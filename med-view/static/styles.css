@@ -57,7 +57,6 @@ body {
     text-transform: lowercase;
     font-size: 1rem;
     
-    /* --- ADDED LINE --- */
     /* Prevent the logo square from shrinking */
     flex-shrink: 0;
 }
@@ -85,13 +84,31 @@ body {
 }
 
 .sidebar__link {
-    display: block;
+    display: flex;    
+    align-items: center;
+    gap: 0.75rem;
     padding: 0.55rem 0.65rem;
     border-radius: 0.5rem;
     font-size: 0.9rem;
     color: #e5e7eb;
     text-decoration: none;
-    opacity: 0.9;
+    opacity: 0.9;   
+    position: relative;
+    overflow: visible;
+}
+
+.sidebar__icon {
+    font-size: 1.2rem;
+    min-width: 24px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar__text {
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
 }
 
 .sidebar__link:hover {
@@ -101,7 +118,7 @@ body {
 
 .sidebar__link--active {
     background: linear-gradient(135deg, #06b6d4, #4f46e5);
-    color: #f9fafb;
+    color:#f9fafb;
     opacity: 1;
 }
 
@@ -160,7 +177,6 @@ body {
     gap: 0.5rem;
 }
 
-
 /* Make title+subtitle align nicely next to the icon button */
 .topbar__left {
     display: flex;
@@ -178,17 +194,44 @@ body {
     transition: width 0.2s ease, padding 0.2s ease;
 }
 
-/* Collapsed layout */
+/* --------------------------------------------------------- */
+/* NEW COLLAPSED LOGIC                                      */
+/* Replaces the old "Hide text labels" block                */
+/* --------------------------------------------------------- */
+
+/* 1. Shrink the sidebar container */
 .layout--sidebar-collapsed .sidebar {
-    width: 64px;        /* narrow strip */
-    padding-inline: 0.75rem;
+    width: 64px;
+    padding-inline: 0.5rem; /* Slightly reduced padding */
 }
 
-/* Hide text labels when collapsed */
-.layout--sidebar-collapsed .sidebar__brand-text,
-.layout--sidebar-collapsed .sidebar__link span,
+/* 2. Hide the specific TEXT span, but leave the ICON span alone */
+.layout--sidebar-collapsed .sidebar__text {
+    opacity: 0;
+    width: 0;
+    pointer-events: none;
+}
+
+/* 3. Center the icons in the narrow strip */
+.layout--sidebar-collapsed .sidebar__link {
+    justify-content: center; 
+    padding-inline: 6px;
+}
+
+/* 4. Ensure the Brand Text fades out (Title & Subtitle) */
+.layout--sidebar-collapsed .sidebar__brand-text {
+    display: none; /* Or use opacity: 0 if you want it to fade */
+}
+
+/* 5. Hide the Footer ('Signed in as') completely */
 .layout--sidebar-collapsed .sidebar__footer {
     display: none;
+}
+
+/* 6. Center the logo */
+.layout--sidebar-collapsed .sidebar__brand {
+    justify-content: center;
+    margin-right: 0;
 }
 
 
@@ -502,4 +545,41 @@ body {
     .cards-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* --- Tooltip Styles --- */
+
+/* Only show tooltip when sidebar is collapsed AND user hovers */
+.layout--sidebar-collapsed .sidebar__link:hover::after {
+    content: attr(data-tooltip); /* Grab the text from HTML */
+    
+    position: absolute;
+    left: 100%;              /* Position it to the right of the button */
+    top: 50%;                /* Center vertically */
+    transform: translateY(-50%); 
+    
+    margin-left: 10px;       /* Little gap from the sidebar */
+    background: #111827;     /* Dark background */
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;     /* Don't let the name wrap */
+    z-index: 50;             /* Ensure it floats on top of everything */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    pointer-events: none;    /* Mouse clicks should go through it */
+}
+
+/* Optional: A tiny arrow pointing left at the sidebar */
+.layout--sidebar-collapsed .sidebar__link:hover::before {
+    content: "";
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 4px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #111827 transparent transparent;
+    z-index: 50;
 }

@@ -24,20 +24,29 @@
             </div>
 
             <nav class="sidebar__nav">
-                <a href="/" class="sidebar__link {{ 'sidebar__link--active' if active_page == 'overview' else '' }}">
-                    <span>Overview</span>
+                <a href="/" 
+                   class="sidebar__link {{ 'sidebar__link--active' if active_page == 'overview' else '' }}"
+                   data-tooltip="Overview">
+                    <span class="sidebar__icon">📊</span>
+                    <span class="sidebar__text">Overview</span>
                 </a>
-                <a href="/timer" class="sidebar__link {{ 'sidebar__link--active' if active_page == 'timer' else '' }}">
-                    <span>Timer</span>
+                <a href="/timer" 
+                   class="sidebar__link {{ 'sidebar__link--active' if active_page == 'timer' else '' }}"
+                   data-tooltip="Timer">
+                    <span class="sidebar__icon">⏱️</span>
+                    <span class="sidebar__text">Timer</span>
                 </a>
-                <a href="#" class="sidebar__link">
-                    <span>Datasets</span>
+                <a href="#" class="sidebar__link" data-tooltip="Datasets">
+                    <span class="sidebar__icon">🗄️</span>
+                    <span class="sidebar__text">Datasets</span>
                 </a>
-                <a href="#" class="sidebar__link">
-                    <span>Alerts</span>
+                <a href="#" class="sidebar__link" data-tooltip="Alerts">
+                    <span class="sidebar__icon">🔔</span>
+                    <span class="sidebar__text">Alerts</span>
                 </a>
-                <a href="#" class="sidebar__link">
-                    <span>Settings</span>
+                <a href="#" class="sidebar__link" data-tooltip="Settings">
+                    <span class="sidebar__icon">⚙️</span>
+                    <span class="sidebar__text">Settings</span>
                 </a>
             </nav>
 
