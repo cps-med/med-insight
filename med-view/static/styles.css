@@ -29,13 +29,11 @@ body {
     display: flex;
     flex-direction: column;
     padding: 1rem 1.25rem;
-    
-    /* Increased time slightly for better feel */
     transition: width 0.3s ease, padding 0.3s ease; 
-    /* Ensures text clips cleanly as width shrinks */
     overflow: hidden;
-    /* Prevents text from wrapping to a new line during transition */
     white-space: nowrap;
+    position: relative;
+    z-index: 20;
 }
 
 .sidebar__brand {
@@ -118,7 +116,8 @@ body {
 
 .sidebar__link--active {
     background: linear-gradient(135deg, #06b6d4, #4f46e5);
-    color:#f9fafb;
+    /* color:#f9fafb; */
+    color: gold;
     opacity: 1;
 }
 
@@ -202,7 +201,8 @@ body {
 /* 1. Shrink the sidebar container */
 .layout--sidebar-collapsed .sidebar {
     width: 64px;
-    padding-inline: 0.5rem; /* Slightly reduced padding */
+    padding-inline: 0.5rem;
+    overflow: visible;
 }
 
 /* 2. Hide the specific TEXT span, but leave the ICON span alone */
@@ -215,7 +215,15 @@ body {
 /* 3. Center the icons in the narrow strip */
 .layout--sidebar-collapsed .sidebar__link {
     justify-content: center; 
-    padding-inline: 6px;
+    padding-inline: 0;
+    gap: 0;
+}
+
+/* Override the active background only when collapsed */
+.layout--sidebar-collapsed .sidebar__link--active {
+    background: transparent; 
+    /* Optional: If you had a box-shadow on the active state, remove it too */
+    box-shadow: none;
 }
 
 /* 4. Ensure the Brand Text fades out (Title & Subtitle) */
@@ -223,8 +231,14 @@ body {
     display: none; /* Or use opacity: 0 if you want it to fade */
 }
 
-/* 5. Hide the Footer ('Signed in as') completely */
+/* 5a. Keep the footer container visible so the border-top (HR) shows */
 .layout--sidebar-collapsed .sidebar__footer {
+    display: block; 
+}
+
+/* 5b. Hide the text content inside it */
+.layout--sidebar-collapsed .sidebar__user-label,
+.layout--sidebar-collapsed .sidebar__user-name {
     display: none;
 }
 

@@ -5,9 +5,12 @@
     <title>{% block title %}Med Dashboard{% endblock %}</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://kit.fontawesome.com/124182fb50.css" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon" href="/static/images/favicon-msu.ico">
 
     <!-- HTMX -->
+    <!-- The /timer link did not work properly with v2.x, so sticking with 1.9.12  -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
 <body>
@@ -27,25 +30,31 @@
                 <a href="/" 
                    class="sidebar__link {{ 'sidebar__link--active' if active_page == 'overview' else '' }}"
                    data-tooltip="Overview">
-                    <span class="sidebar__icon">📊</span>
+                    <i class="fa-regular fa-chart-column fa-lg"></i>
                     <span class="sidebar__text">Overview</span>
+                </a>
+                <a href="/htmx" 
+                   class="sidebar__link {{ 'sidebar__link--active' if active_page == 'htmx' else '' }}"
+                   data-tooltip="htmx">
+                   <i class="fa-solid fa-code fa-lg"></i>
+                    <span class="sidebar__text">htmx</span>
                 </a>
                 <a href="/timer" 
                    class="sidebar__link {{ 'sidebar__link--active' if active_page == 'timer' else '' }}"
                    data-tooltip="Timer">
-                    <span class="sidebar__icon">⏱️</span>
+                    <i class="fa-sharp fa-regular fa-timer fa-lg"></i>
                     <span class="sidebar__text">Timer</span>
                 </a>
                 <a href="#" class="sidebar__link" data-tooltip="Datasets">
-                    <span class="sidebar__icon">🗄️</span>
+                    <i class="fa-regular fa-cabinet-filing fa-lg"></i>
                     <span class="sidebar__text">Datasets</span>
                 </a>
                 <a href="#" class="sidebar__link" data-tooltip="Alerts">
-                    <span class="sidebar__icon">🔔</span>
+                    <i class="fa-regular fa-bell fa-lg"></i>
                     <span class="sidebar__text">Alerts</span>
                 </a>
                 <a href="#" class="sidebar__link" data-tooltip="Settings">
-                    <span class="sidebar__icon">⚙️</span>
+                    <i class="fa-regular fa-gear fa-lg"></i>
                     <span class="sidebar__text">Settings</span>
                 </a>
             </nav>

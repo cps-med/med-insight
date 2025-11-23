@@ -1,18 +1,16 @@
 # -----------------------------------------------------------
 # main.py
 # -----------------------------------------------------------
-# Current Time: a sample FastAPI + HTMX + Jinja2 web app
-#   GET / → renders a page with a button
-#   Clicking the button uses HTMX to call GET /time
-#   GET /time → returns a small HTML snippet (just the time)
-# -----------------------------------------------------------
+# Med-Insight Dashboard
+#
 # Dependencies:
-#   pip install fastapi uvicorn jinja2 python-multipart
-# -----------------------------------------------------------
+# pip install fastapi uvicorn jinja2 python-multipart
+#
 # How to Run using Uvicorn:
-#   In the same directory where main.py is located:
-#   uvicorn main:app --reload
-#   Access in browser: http://127.0.0.1:8000/
+# CD to med-view directory
+# uvicorn main:app --reload
+# Access in browser: http://127.0.0.1:8000/
+#
 # To stop server:
 #   CTRL + C
 # -----------------------------------------------------------
@@ -72,6 +70,18 @@ async def get_time(request: Request):
             "request": request,
             "now": now,
         },
+    )
+
+
+@app.get("/htmx", response_class=HTMLResponse)
+async def htmx_page(request: Request):
+    """Render the main HTMX page."""
+    return templates.TemplateResponse(
+        "htmx.html",
+        {
+            "request": request,
+            "active_page": "htmx"
+        }
     )
 
 
