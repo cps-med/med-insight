@@ -24,11 +24,11 @@
             </div>
 
             <nav class="sidebar__nav">
-                <a href="/" class="sidebar__link sidebar__link--active">
+                <a href="/" class="sidebar__link {{ 'sidebar__link--active' if active_page == 'overview' else '' }}">
                     <span>Overview</span>
                 </a>
-                <a href="/" class="sidebar__link">
-                    <span>Jobs</span>
+                <a href="/timer" class="sidebar__link {{ 'sidebar__link--active' if active_page == 'timer' else '' }}">
+                    <span>Timer</span>
                 </a>
                 <a href="#" class="sidebar__link">
                     <span>Datasets</span>
@@ -45,7 +45,7 @@
                 <span class="sidebar__user-label">Signed in as</span>
                 <span class="sidebar__user-name">csylvester</span>
             </div>
-            
+
         </aside>
 
     <div class="main">

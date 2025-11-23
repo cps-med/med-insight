@@ -19,7 +19,7 @@
 
 from datetime import datetime
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -54,7 +54,8 @@ async def index(request: Request):
         {
             "request": request,
             "summary": summary,
-            "recent_activity": recent_activity
+            "recent_activity": recent_activity,
+            "active_page": "overview"
         },
     )
 
@@ -70,5 +71,64 @@ async def get_time(request: Request):
         {
             "request": request,
             "now": now,
+        },
+    )
+
+
+@app.get("/timer", response_class=HTMLResponse)
+async def timer_page(request: Request):
+    """Render the main Timer page."""
+    return templates.TemplateResponse(
+        "timer.html",
+        {
+            "request": request,
+            "active_page": "timer"
+        }
+    )
+
+
+@app.post("/timer/start", response_class=HTMLResponse)
+async def start_timer(request: Request):
+    """
+    Triggered when 'Start' is clicked.
+    Returns the 'Running' partial.
+    """
+    now = datetime.now()
+    
+    return templates.TemplateResponse(
+        "partials/timer_running.html",
+        {
+            "request": request,
+            # Formatted for display (e.g., "02:30:45 PM")
+            "start_time_display": now.strftime("%I:%M:%S %p"),
+            # ISO format for the hidden input value (machine readable)
+            "start_timestamp": now.isoformat()
+        },
+    )
+
+
+@app.post("/timer/stop", response_class=HTMLResponse)
+async def stop_timer(request: Request, start_timestamp: str = Form(...)):
+    """
+    Triggered when 'Stop' is clicked.
+    Calculates duration and returns the 'Stopped' partial.
+    """
+    stop_dt = datetime.now()
+    start_dt = datetime.fromisoformat(start_timestamp)
+    
+    # Calculate duration
+    delta = stop_dt - start_dt
+    
+    # Format duration (removing microseconds for cleaner display)
+    # str(delta) usually looks like "0:00:05.123456"
+    duration_str = str(delta).split('.')[0] 
+
+    return templates.TemplateResponse(
+        "partials/timer_stopped.html",
+        {
+            "request": request,
+            "start_time_display": start_dt.strftime("%I:%M:%S %p"),
+            "stop_time_display": stop_dt.strftime("%I:%M:%S %p"),
+            "duration": duration_str
         },
     )
