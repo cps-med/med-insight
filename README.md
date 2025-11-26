@@ -4,7 +4,7 @@
 
 Built as an end-to-end solution, Med-Insight integrates data from multiple clinical systems, performs ETL processing into a structured database or data warehouse, and applies advanced AI/ML techniques to uncover patterns, trends, and recommendations that support data-informed decision making at the point of care. The end-user interface provides a dashboard for top-level insights data exploration.
 
-The complete Med-Insight application consists of three subsystems, organized as subdirectories under the the parent _med-insight_ folder. These subsystems/components consist of:
+The complete Med-Insight application consists of four subsystems, organized as subdirectories under the the parent _med-insight_ folder. These subsystems/components consist of:
 
 * **med-data:** Mock data sources for med-insight development and testing
 * **med-etl:** ETL functionality to retreive, process, and store data in a data mart
@@ -19,7 +19,7 @@ To get started, clone the med-insight repository into a directory of your choice
 git clone https://github.com/cps-med/med-insight.git  
 ```
 
-This will create the root med-insight folder and subfolders for each of the three subsystems.  
+This will create the root med-insight folder and subfolders for each of the four subsystems.  
 
 #### Create Folder Structure for Extract and Logging Files
 In addition to the med-insight application, you will need to create a location for the extract and logging files. This location is configurable, but assumed to be adjacent to med-insight. Create the base med-output folder and two subfolders.  
@@ -64,7 +64,7 @@ claude
 ```
 
 ## Local Environment Setup
-Refer to the README.md files in each of the three subsystems for information on the respective tech stack, local development environment setup, and general guidance. You may need to reach out to a peer developer to get secret and sensitive information that is not under version control, such as the contents of .env files.
+Refer to the README.md files in each of the four subsystems for information on the respective tech stack, local development environment setup, and general guidance. You may need to reach out to a peer developer to get secret and sensitive information that is not under version control, such as the contents of .env files.
 
 ## GitHub Issues
-GitHub Issues is used to track and manage development work across all three subsystems in a lightweight but structured manner. Each issue represents a coding task and should include relevant context and status updates. Once a task is complete, it can be closed with a comment.
+GitHub Issues is used to track and manage development work across all four subsystems in a lightweight but structured manner. Each issue represents a coding task and should include relevant context and status updates. Once a task is complete, it can be closed with a comment.

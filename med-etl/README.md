@@ -1,4 +1,9 @@
 # med-etl
+
+ETL functionality to retreive, process, and store data in a data mart
+
+## Overview
+
 **med-etl** is a subsystem of the med-insight application that provides ETL functionality to retrieve data from external systems and store transformed data in a data mart.  
 
 It performs two primary functions:
