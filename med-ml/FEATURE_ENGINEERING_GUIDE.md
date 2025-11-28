@@ -80,7 +80,19 @@ When clustering patients or assessing overall risk, you need **one comprehensive
 
 ### Feature Categories
 
-#### 1. Medication Profile Features
+#### 1. Demographic Features
+**What they measure:** Patient demographic characteristics that influence medication response and DDI risk
+
+| Feature | Description | Example Value | Why It Matters |
+|---------|-------------|---------------|----------------|
+| `Age` | Patient age in years | 72 | Age affects drug metabolism, clearance, and DDI sensitivity |
+| `AgeGroup` | Age category | "65-79" | Enables age-stratified analysis and clustering |
+| `IsElderly` | Elderly flag (65+) | 1 (yes) | Elderly patients have higher DDI risk (polypharmacy, altered pharmacokinetics) |
+| `Gender` | Gender code | "M" | Gender affects drug metabolism and certain DDI risks |
+
+**Clinical Insight:** Age is one of the strongest predictors of DDI risk. Elderly patients (65+) often have multiple chronic conditions (polypharmacy), altered drug metabolism (slower clearance), and increased sensitivity to adverse drug interactions. Gender can also influence drug metabolism through differences in body composition and enzyme activity.
+
+#### 2. Medication Profile Features
 **What they measure:** The patient's medication burden and complexity
 
 | Feature | Description | Example Value | Why It Matters |
@@ -92,7 +104,7 @@ When clustering patients or assessing overall risk, you need **one comprehensive
 
 **Clinical Insight:** A patient taking 10 different medications has exponentially more DDI risk than one taking 2 medications.
 
-#### 2. Temporal Features
+#### 3. Temporal Features
 **What they measure:** Duration and patterns of medication use over time
 
 | Feature | Description | Example Value | Why It Matters |
@@ -103,7 +115,7 @@ When clustering patients or assessing overall risk, you need **one comprehensive
 
 **Clinical Insight:** Patients with longer medication histories often have chronic conditions requiring careful DDI monitoring.
 
-#### 3. Source System Features
+#### 4. Source System Features
 **What they measure:** Where medications are prescribed/administered
 
 | Feature | Description | Example Value | Why It Matters |
@@ -114,7 +126,7 @@ When clustering patients or assessing overall risk, you need **one comprehensive
 
 **Clinical Insight:** Patients receiving care in multiple settings (VA + non-VA) have higher risk of DDI because providers may not see the complete medication list.
 
-#### 4. DDI Risk Features
+#### 5. DDI Risk Features
 **What they measure:** The patient's actual DDI burden
 
 | Feature | Description | Example Value | Why It Matters |
@@ -129,7 +141,7 @@ When clustering patients or assessing overall risk, you need **one comprehensive
 
 **Clinical Insight:** A patient with `ddi_density=0.5` has DDI in half of all possible drug combinations - extremely high risk!
 
-#### 5. Clinical Indicators (Binary Flags)
+#### 6. Clinical Indicators (Binary Flags)
 **What they measure:** Clinical decision thresholds
 
 | Feature | Description | Example Value | Why It Matters |
@@ -143,6 +155,10 @@ When clustering patients or assessing overall risk, you need **one comprehensive
 
 ```
 PatientSID: 1005
+Age: 72
+AgeGroup: "65-79"
+IsElderly: 1
+Gender: "M"
 unique_medications: 3
 medication_count: 8
 ddi_pair_count: 1
@@ -155,7 +171,7 @@ is_polypharmacy: 0
 is_high_ddi_risk: 1
 ```
 
-**Interpretation:** This patient takes 3 different medications, has 1 DDI pair of moderate severity, and is flagged for high DDI risk despite not meeting polypharmacy criteria (5+ meds). The `ddi_density` of 0.33 means one-third of possible drug pairs interact.
+**Interpretation:** This is a 72-year-old male patient (elderly) who takes 3 different medications, has 1 DDI pair of moderate severity, and is flagged for high DDI risk despite not meeting polypharmacy criteria (5+ meds). The `ddi_density` of 0.33 means one-third of possible drug pairs interact. Being elderly (IsElderly=1) increases his vulnerability to adverse effects from this DDI.
 
 ---
 
@@ -206,11 +222,13 @@ When analyzing specific interactions or building prediction models (e.g., "will 
 
 | Feature | Description | Example Value | Why It Matters |
 |---------|-------------|---------------|----------------|
+| `patient_age` | Patient's age | 72 | Age affects DDI vulnerability |
+| `patient_is_elderly` | Elderly flag | 1 | Elderly patients more sensitive to DDIs |
 | `patient_medication_count` | Patient's total meds | 8 | Polypharmacy context |
 | `patient_total_risk_score` | Patient's overall DDI risk | 10 | Cumulative risk context |
 | `patient_is_polypharmacy` | Polypharmacy flag | 1 | Patient complexity |
 
-**Clinical Insight:** A single moderate DDI in a patient with `patient_total_risk_score=15` is different than in a patient with `score=2`. Context matters!
+**Clinical Insight:** A single moderate DDI in a patient with `patient_total_risk_score=15` is different than in a patient with `score=2`. Context matters! Age is particularly important - the same DDI can be benign in a young patient but dangerous in an elderly patient with reduced drug clearance.
 
 ### Example DDI Pair Record
 
@@ -223,12 +241,14 @@ interaction_type: Bleeding Risk
 temporal_overlap: 1
 first_occurrence_date: 2024-02-01
 days_between_drug_starts: 17
+patient_age: 72
+patient_is_elderly: 1
 patient_medication_count: 3
 patient_total_risk_score: 2
 patient_is_polypharmacy: 0
 ```
 
-**Interpretation:** Patient 1005 has a moderate bleeding risk from WARFARIN + ACETYLSALICYLIC ACID. Both drugs are currently active (temporal_overlap=1), and this DDI first appeared 17 days after starting WARFARIN. The patient is not polypharmacy but still has clinically significant DDI risk.
+**Interpretation:** Patient 1005 has a moderate bleeding risk from WARFARIN + ACETYLSALICYLIC ACID. Both drugs are currently active (temporal_overlap=1), and this DDI first appeared 17 days after starting WARFARIN. The patient is a 72-year-old (elderly), which increases bleeding risk sensitivity. Despite not meeting polypharmacy criteria, this elderly patient has clinically significant DDI risk requiring careful monitoring.
 
 ---
 
@@ -241,11 +261,12 @@ patient_is_polypharmacy: 0
 **Algorithm:** K-means, hierarchical clustering, or DBSCAN
 
 **Example Clusters:**
-1. **Low-risk chronic**: Few medications, no DDIs, stable over time
-2. **High-risk polypharmacy**: 8+ medications, multiple DDIs, fragmented care
-3. **Acute care spike**: Short medication bursts (hospitalizations), BCMA-heavy
+1. **Low-risk young**: Few medications, no DDIs, younger patients, stable over time
+2. **Elderly high-risk polypharmacy**: 8+ medications, multiple DDIs, age 65+, fragmented care
+3. **Middle-age moderate complexity**: Moderate medication load, some DDIs, 40-64 age group
+4. **Acute care spike**: Short medication bursts (hospitalizations), BCMA-heavy, all age groups
 
-**Why It Matters:** Clustering reveals patient subgroups needing different interventions.
+**Why It Matters:** Clustering reveals patient subgroups needing different interventions. Age-stratified clusters help tailor interventions to life stage and physiological vulnerability.
 
 ### Near-Term Use: DDI Risk Analysis (06_analysis.ipynb)
 
@@ -256,6 +277,8 @@ patient_is_polypharmacy: 0
 - Which drug pairs are most common in high-risk patients?
 - What's the distribution of DDI severity across the population?
 - Which patients need immediate medication review?
+- Are elderly patients at higher DDI risk than younger patients?
+- Do DDI patterns differ by age group or gender?
 - Are there geographic or temporal patterns?
 
 ### Future Use: Predictive Modeling
@@ -287,6 +310,8 @@ We didn't just calculate statistics - we encoded clinical knowledge:
 - Polypharmacy threshold (5+ medications)
 - DDI severity weighting (High=3, Moderate=2, Low=1)
 - Temporal overlap (concurrent use matters)
+- Elderly threshold (65+ years) for age-related vulnerability
+- Age groups aligned with clinical pharmacokinetic changes
 
 ### 2. **Multiple Granularities**
 We created features at different levels:
@@ -300,6 +325,9 @@ We created features that aren't in the raw data:
 - `ddi_density` = calculated from counts
 - `medication_diversity` = Shannon entropy
 - `interaction_type` = extracted from text descriptions
+- `Age` = calculated from DateOfBirth
+- `AgeGroup` = binned age categories
+- `IsElderly` = binary threshold flag
 
 These capture insights that raw data doesn't reveal.
 
@@ -327,21 +355,25 @@ We validated features:
 
 ### Step 2: Identify What Matters Clinically
 **Clinical Knowledge:**
+- Age increases risk (elderly have altered pharmacokinetics)
 - Polypharmacy increases risk
 - Severity matters (High > Moderate > Low)
 - Concurrent use matters (temporal overlap)
 - Fragmented care matters (multiple systems)
+- Gender influences drug metabolism
 
 ### Step 3: Transform Raw Data → Features
 **Raw Data:**
+- Patient demographics (DateOfBirth, Gender) from SPatient.SPatient
 - Medication records with dates, drug names, source systems
 - DDI reference data with drug pairs and descriptions
 
 **Features Created:**
+- Demographics (age calculation, age groups, elderly flags, gender standardization)
 - Aggregations (counts, sums, averages)
 - Calculations (density, diversity, scores)
 - Extractions (interaction types from text)
-- Binary flags (polypharmacy, high risk)
+- Binary flags (polypharmacy, high risk, elderly)
 
 ### Step 4: Create Multiple Feature Sets
 **Two datasets** for different use cases:
@@ -360,7 +392,7 @@ We validated features:
 
 1. **Features are the bridge** between raw data and machine learning models
 
-2. **Good feature engineering requires domain knowledge** - we encoded clinical expertise about polypharmacy, DDI severity, and temporal patterns
+2. **Good feature engineering requires domain knowledge** - we encoded clinical expertise about age-related vulnerability, polypharmacy, DDI severity, and temporal patterns
 
 3. **Different ML tasks need different feature granularities** - that's why we created both patient-level and pair-level features
 
