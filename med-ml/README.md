@@ -19,16 +19,21 @@ AI and Machine learning layer for Med-Insight
 
 ```
 med-ml/
-├── src/                           # All code (notebooks + Python modules)
-│   ├── config.py                  # Centralized configuration
-│   ├── ddi_transforms.py          # DDI-specific transformations
-│   ├── 01_dataprep.ipynb          # Data preparation
-│   ├── 02_explore.ipynb           # Exploratory data analysis
-│   ├── 03_clean.ipynb             # Data cleaning
-│   ├── 04_features.ipynb          # Feature engineering
-│   ├── 05_models.ipynb            # Model development
-│   └── 06_analysis.ipynb          # Results analysis
-└── README.md                      # This file
+├── src/                                  # All code (notebooks + Python modules)
+│   ├── config.py                         # Centralized configuration
+│   ├── ddi_transforms.py                 # DDI-specific transformations
+│   ├── 01a_dataprep_ddi.ipynb            # ✅ Data prep: DDI reference data
+│   ├── 01b_dataprep_medications.ipynb    # ✅ Data prep: Patient medications
+│   ├── 01c_dataprep_demographics.ipynb   # ✅ Data prep: Patient demographics
+│   ├── 02_explore.ipynb                  # ✅ Exploratory data analysis
+│   ├── 03_clean.ipynb                    # ✅ Data cleaning and validation
+│   ├── 04_features.ipynb                 # ✅ Feature engineering
+│   ├── 05_clustering.ipynb               # 🔜 Patient risk clustering (pending)
+│   └── 06_analysis.ipynb                 # 🔜 Results analysis (pending)
+├── FEATURE_ENGINEERING_GUIDE.md          # Guide to feature engineering approach
+├── DEMOGRAPHICS_IMPLEMENTATION.md        # Demographics data implementation details
+├── CLUSTERING_AND_ANALYSIS_GUIDE.md      # Guide for clustering and analysis phase
+└── README.md                             # This file
 ```
 
 ## Medallion Architecture
@@ -101,34 +106,71 @@ Access at: http://localhost:8888
 
 ## Workflow
 
-### 1. Data Preparation (`01_dataprep.ipynb`)
-- Read CSV from `med-sandbox/kaggle-data/ddi/`
+### Phase 1: Data Preparation (✅ Complete)
+
+#### 1a. DDI Reference Data (`01a_dataprep_ddi.ipynb`)
+- Read DDI CSV from `med-sandbox/kaggle-data/ddi/`
 - Write unmodified Parquet to `med-data/v1_raw/ddi/`
-- Verify data integrity
+- 267,264 drug-drug interaction records
 
-### 2. Exploratory Data Analysis (`02_explore.ipynb`)
-- Load from v1_raw
-- Examine schema, distributions, missing values
-- Identify data quality issues
+#### 1b. Patient Medications (`01b_dataprep_medications.ipynb`)
+- Read medications from CDWWork SQL Server database (RxOut, BCMA schemas)
+- Normalize drug names and create patient medication profiles
+- Write to `med-data/v1_raw/medications/`
+- Expanded cohort: 15 patients with realistic poly-pharmacy patterns
+- Includes 5 elderly patients (ages 68-82) with DDI scenarios
 
-### 3. Data Cleaning (`03_clean.ipynb`)
-- Apply transformations from `ddi_transforms.py`
-- Handle missing values, duplicates
-- Write to v2_clean
+#### 1c. Patient Demographics (`01c_dataprep_demographics.ipynb`)
+- Read demographics from CDWWork SQL Server database (SPatient schema)
+- Process age, gender, and comorbidities
+- Write to `med-data/v1_raw/demographics/`
+- Expanded cohort: 15 patients across 3 geographic locations (Sta3n 508, 516, 552)
 
-### 4. Feature Engineering (`04_features.ipynb`)
-- Create risk scoring features
-- Encode categorical variables
-- Write to v3_features
+### Phase 2: Exploration (✅ Complete)
 
-### 5. Model Development (`05_models.ipynb`)
-- Train risk prediction models
-- Hyperparameter tuning
-- Write outputs to v4_models
+#### 2. Exploratory Data Analysis (`02_explore.ipynb`)
+- Load from v1_raw (DDI, medications, demographics)
+- Examine schemas, distributions, missing values
+- Identify data quality issues and relationship patterns
+- 267K DDI pairs, 15 patients, 6-10 medications per patient
+- Enhanced with elderly cohort featuring 18 clinically significant DDI scenarios
 
-### 6. Analysis (`06_analysis.ipynb`)
-- Evaluate model performance
-- Generate insights and reports
+### Phase 3: Cleaning (✅ Complete)
+
+#### 3. Data Cleaning (`03_clean.ipynb`)
+- Apply standardization and validation rules
+- Handle missing values and duplicates
+- Normalize categorical variables
+- Write to `med-data/v2_clean/`
+
+### Phase 4: Feature Engineering (✅ Complete)
+
+#### 4. Feature Engineering (`04_features.ipynb`)
+- **Patient-level features** (19 features):
+  - Demographics: age, gender, age groups
+  - Medication burden: total medications, unique classes
+  - DDI risk metrics: total interactions, severity distribution
+  - Polypharmacy indicators
+- **DDI pair-level features**:
+  - Interaction characteristics with patient context
+  - Severity, clinical significance, mechanism
+- Write to `med-data/v3_features/`
+
+### Phase 5: Clustering (🔜 Pending)
+
+#### 5. Patient Risk Clustering (`05_clustering.ipynb`)
+- Discover natural patient groupings based on risk profiles
+- K-means, hierarchical, and DBSCAN clustering
+- Identify high-risk, moderate-risk, and low-risk cohorts
+- Write cluster assignments to `med-data/v3_features/`
+
+### Phase 6: Analysis (🔜 Pending)
+
+#### 6. Deep Analysis (`06_analysis.ipynb`)
+- Analyze cluster characteristics and patterns
+- Generate clinical insights and recommendations
+- Prepare for predictive modeling
+- Write reports to `med-data/v4_models/`
 
 ## Configuration
 
@@ -156,9 +198,21 @@ V4_MODELS_PREFIX = "v4_models/ddi/"
 
 The initial use case identifies DDI risks from patient prescription data:
 
-1. **Input**: DDI reference dataset (`db_drug_interactions.csv`)
-2. **Goal**: Risk identification and scoring for patient prescriptions
-3. **Output**: Risk scores and recommendations for clinical decision support
+1. **Input Datasets**:
+   - DDI reference data (267K drug-drug interactions from Kaggle)
+   - Patient medication profiles (15 patients from CDWWork database)
+   - Patient demographics and comorbidities (15 patients from CDWWork database)
+   - Geographic data via Sta3n facility identifiers (3 VA locations)
+2. **Goal**: Risk identification, patient clustering, and risk scoring for clinical decision support
+3. **Current Status**: Feature engineering complete; ready for clustering and modeling
+4. **Key Features**:
+   - Elderly patient cohort (ages 68-82) with multiple comorbidities
+   - 18 clinically significant DDI scenarios (Warfarin, NSAIDs, ACE inhibitors, statins, etc.)
+   - Geographic distribution for location-based analysis
+5. **Output**:
+   - Patient risk profiles and cluster assignments
+   - DDI risk scores with severity classification
+   - Clinical recommendations for high-risk patients
 
 ## Development Notes
 
@@ -166,13 +220,28 @@ The initial use case identifies DDI risks from patient prescription data:
 - Follow test-then-batch pattern: test with small samples before full processing
 - Track metrics: row counts, processing time, data quality
 - All imports use: `from config import *` for consistency
+- Comprehensive guides available:
+  - `FEATURE_ENGINEERING_GUIDE.md` - Feature engineering methodology
+  - `DEMOGRAPHICS_IMPLEMENTATION.md` - Demographics integration approach
+  - `CLUSTERING_AND_ANALYSIS_GUIDE.md` - Clustering and analysis strategy
 
-## Next Steps
+## Current Status and Next Steps
 
-1. Run `01_dataprep.ipynb` to convert source CSV to Parquet
-2. Create `02_explore.ipynb` for EDA after examining data schema
-3. Implement cleaning logic in `ddi_transforms.py` based on findings
-4. Develop feature engineering and risk scoring models
+**Completed Work (✅)**:
+- ✅ All data preparation notebooks (DDI, medications, demographics)
+- ✅ Exploratory data analysis across all datasets
+- ✅ Data cleaning and validation
+- ✅ Feature engineering (19 patient-level features + DDI pair features)
+- ✅ Expanded CDWWork database with elderly patient cohort (5 patients, 18 DDI scenarios)
+
+**In Progress (🔄)**:
+- 🔄 Patient risk clustering implementation
+- 🔄 Pattern analysis and insight generation
+
+**Upcoming (🔜)**:
+- 🔜 Predictive modeling (risk scores, classification)
+- 🔜 Model evaluation and validation
+- 🔜 Integration with med-view dashboard
 
 ## Additional Resources
 

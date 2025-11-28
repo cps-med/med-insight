@@ -114,6 +114,35 @@ python main.py
 **Entry Point**: `main.py` provides interactive CLI for ETL operations
 **Extract Types**: ADM (admissions), LBB (lab blood bank), RAD (radiology), CLI (clinic)
 
+### med-ml: AI/ML Analysis
+
+```bash
+# Navigate to med-ml directory
+cd ~/swdev/med/med-insight/med-ml/src
+
+# Activate environment
+source ../../.venv/bin/activate
+
+# Start JupyterLab
+jupyter lab
+# Access at: http://localhost:8888
+
+# OR use VS Code with Jupyter extension
+# Open .ipynb files directly in VS Code
+# Select kernel: .venv (Python 3.11)
+```
+
+**Tech Stack**: JupyterLab + Pandas + scikit-learn + MinIO
+**Notebooks**:
+- `01a/b/c_dataprep_*.ipynb` - Data preparation (DDI, medications, demographics)
+- `02_explore.ipynb` - Exploratory data analysis
+- `03_clean.ipynb` - Data cleaning
+- `04_features.ipynb` - Feature engineering
+- `05_clustering.ipynb` - Patient risk clustering (pending)
+- `06_analysis.ipynb` - Results analysis (pending)
+
+**Data Storage**: MinIO medallion architecture (v1_raw → v2_clean → v3_features → v4_models)
+
 ### med-data: Database and Mock Data
 
 ```bash
@@ -124,9 +153,13 @@ cd ~/swdev/med/med-insight/med-data
 cd sql-server/cdwwork/create
 ./_master.sh
 
-# Populate with sample data (FIRST TIME ONLY)
+# Populate with base sample data (FIRST TIME ONLY)
 cd ../insert
 ./_master.sh
+
+# Optional: Add elderly patient cohort with DDI scenarios
+sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -i _add_elderly_patients.sql
+# Adds 5 elderly patients (ages 68-82) with 18 DDI scenarios
 
 # Generate sample extract files
 cd ~/swdev/med/med-insight/med-data
@@ -174,7 +207,7 @@ No formal test suite is currently implemented. Testing is primarily manual via:
         ↓
 [Extract Database]          (med-etl: SQL Server Extract database)
         ↓
-[AI/ML Processing]          (med-ml: Future implementation)
+[AI/ML Processing]          (med-ml: JupyterLab notebooks, MinIO storage)
         ↓
 [Web Dashboard]             (med-view: FastAPI + HTMX UI)
 ```
@@ -194,9 +227,17 @@ No formal test suite is currently implemented. Testing is primarily manual via:
    - Interactive CLI for ETL operations
 
 3. **med-ml** (AI/ML Layer)
-   - **Status**: Early development stage
-   - **Future dependency**: Extract database from med-etl
-   - Will consume prepared data and generate models/predictions
+   - **Status**: Active development - feature engineering complete
+   - **Dependencies**: MinIO object storage from med-data
+   - **Data Sources**: Kaggle datasets stored in MinIO (DDI, medications, demographics)
+   - **Current Progress**:
+     - ✅ Data preparation (3 notebooks: DDI, medications, demographics)
+     - ✅ Exploratory data analysis
+     - ✅ Data cleaning and validation
+     - ✅ Feature engineering (19 patient-level features)
+     - 🔜 Clustering and predictive modeling (next phase)
+   - **Tech Stack**: JupyterLab, Pandas, scikit-learn, PyArrow, MinIO
+   - **Architecture**: Medallion pattern (v1_raw → v2_clean → v3_features → v4_models)
 
 4. **med-view** (Web Dashboard)
    - **Status**: Early development stage
@@ -210,7 +251,11 @@ No formal test suite is currently implemented. Testing is primarily manual via:
 - Engine: SQL Server 2019
 - Purpose: Mock VA Corporate Data Warehouse
 - Schemas: Dim, Inpat, SPatient, SStaff, RxOut, BCMA
-- 30+ tables with ~200+ sample records
+- 30+ tables with ~270+ sample records
+- **Patient Cohort**: 15 patients (10 base + 5 elderly with DDI scenarios)
+- **Medications**: 62 outpatient prescriptions, 40 BCMA administration events
+- **DDI Testing**: 18 clinically significant drug-drug interaction pairs
+- **Geographic Data**: 3 VA facilities (Sta3n 508-Atlanta, 516-Bay Pines, 552-Dayton)
 
 **Target Database (Extract)** - Created by med-etl
 - Engine: SQL Server 2019
@@ -236,10 +281,27 @@ Both databases run in the same Docker container but maintain logical separation.
 - `constants_sample_extract.py` - Schema definitions for extract generation
 - `csv_to_parquet.py` - Convert CSV to Parquet format for MinIO
 
+**med-data SQL scripts** (sql-server/cdwwork/insert/):
+- `_master.sql` - Master insert script for base patient cohort (10 patients)
+- `_add_elderly_patients.sql` - Incremental script for elderly cohort with DDI scenarios (5 patients)
+
 **med-view structure**:
 - `main.py` - FastAPI application entry point
 - `templates/` - Jinja2 HTML templates
 - `static/` - CSS, JavaScript, images
+
+**med-ml structure** (src/ directory):
+- `config.py` - Centralized MinIO and path configuration
+- `ddi_transforms.py` - DDI-specific data transformations
+- `01a_dataprep_ddi.ipynb` - DDI reference data preparation
+- `01b_dataprep_medications.ipynb` - Patient medications preparation
+- `01c_dataprep_demographics.ipynb` - Patient demographics preparation
+- `02_explore.ipynb` - Exploratory data analysis
+- `03_clean.ipynb` - Data cleaning and validation
+- `04_features.ipynb` - Feature engineering (patient & DDI features)
+- `FEATURE_ENGINEERING_GUIDE.md` - Feature engineering methodology
+- `DEMOGRAPHICS_IMPLEMENTATION.md` - Demographics integration details
+- `CLUSTERING_AND_ANALYSIS_GUIDE.md` - Clustering strategy guide
 
 ## Environment Configuration
 
@@ -260,10 +322,12 @@ All four subsystems (med-data, med-etl, med-ml, med-view) read from this root-le
 - `CDWWORK_DB_PASSWORD` - CDWWork database password (same as sa password)
 - `EXTRACT_DB_PASSWORD` - Extract database password (same as sa password)
 
-**MinIO** (used by med-data, med-etl):
+**MinIO** (used by med-data, med-etl, med-ml):
 - `MINIO_ROOT_USER` - MinIO admin username
 - `MINIO_ROOT_PASSWORD` - MinIO admin password
 - `MINIO_ENDPOINT` - Host and port (localhost:9000)
+
+**Note**: med-ml uses MinIO extensively for medallion architecture data storage (raw, clean, features, models)
 
 **Database Connection Pattern** (med-etl):
 The `db_config.py` module uses environment variable prefixes to support multiple databases:
@@ -299,7 +363,8 @@ Some subsystems may use their own `.venv` for isolation. Check subsystem README.
 **For CDWWork (med-data)**:
 1. Edit SQL scripts in `med-data/sql-server/cdwwork/create/`
 2. Regenerate database: `cd create && ./_master.sh`
-3. Repopulate data: `cd ../insert && ./_master.sh`
+3. Repopulate base data: `cd ../insert && ./_master.sh`
+4. Optional: Add elderly patient cohort: `sqlcmd ... -i _add_elderly_patients.sql`
 
 **For Extract (med-etl)**:
 1. Edit SQL scripts in `med-etl/dbscript/sql-server/extract/create/`

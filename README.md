@@ -6,9 +6,9 @@ Built as an end-to-end solution, Med-Insight integrates data from multiple clini
 
 The complete Med-Insight application consists of four subsystems, organized as subdirectories under the the parent _med-insight_ folder. These subsystems/components consist of:
 
-* **med-data:** Mock data sources for med-insight development and testing
+* **med-data:** Mock data sources for med-insight development and testing (15 patients, 270+ records, DDI scenarios)
 * **med-etl:** ETL functionality to retreive, process, and store data in a data mart
-* **med-ml:** AI and Machine learning layer
+* **med-ml:** AI and Machine learning layer for risk analysis and pattern discovery (DDI risk analysis)
 * **med-view:** Web UI for medical data analysis, reporting, and visualization
 
 ## Getting Started

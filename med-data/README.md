@@ -18,7 +18,9 @@ The data available within med-data is **synthetic** and does not contain PHI or 
 - **MinIO Object Storage**: Mimics ADLS Gen2 for Parquet file storage
 - **Sample Extract Generator**: Creates fixed-length ASCII clinical data files
 - **Pharmacy Data**: Outpatient prescriptions (RxOut) and inpatient medication administration (BCMA)
-- **Realistic Test Data**: 10 patients, 6 providers, 20 prescriptions, 20 BCMA events, 8 inpatient stays
+- **Realistic Test Data**: 15 patients, 6 providers, 62 prescriptions, 40 BCMA events, 13 inpatient stays
+- **DDI Scenarios**: 5 elderly patients (ages 68-82) with 18 clinically significant drug-drug interactions
+- **Geographic Data**: Patient distribution across 3 VA facilities (Sta3n 508, 516, 552) for location-based analysis
 
 ---
 
@@ -477,6 +479,21 @@ cd ../insert
 
 This populates all tables with realistic test data.
 
+**Optional: Add Elderly Patient Cohort**
+After loading the base data, you can optionally add an expanded elderly patient cohort with DDI scenarios:
+```bash
+cd ../insert
+sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -i _add_elderly_patients.sql
+```
+
+This script adds:
+- 5 elderly patients (ages 68-82) with multiple comorbidities
+- 42 outpatient prescriptions including DDI medication pairs
+- 20 BCMA medication administration records
+- 5 inpatient admissions
+- 18 clinically significant drug-drug interaction scenarios
+- Geographic distribution across 3 VA stations (508, 516, 552)
+
 **Note**: The `_master.sh` scripts use the `MSSQL_SA_PASSWORD` environment variable from your `.env` file.
 
 #### Alternative: Manual sqlcmd Execution
@@ -533,7 +550,12 @@ The **CDWWork** database simulates VA Corporate Data Warehouse structure with 6 
 | **BCMA** | Medication administration | 4 | 20 administration events |
 
 **Total Tables**: 30+
-**Total Records**: ~200+ across all tables
+**Total Records**: ~270+ across all tables (expanded with elderly patient cohort)
+
+**Recent Enhancements**:
+- **Elderly Patient Cohort**: 5 additional patients (ages 68-82) with polypharmacy and DDI scenarios
+- **DDI Testing Data**: 18 clinically significant drug-drug interaction pairs for medication safety analysis
+- **Geographic Coverage**: Expanded Sta3n distribution (Atlanta GA, Bay Pines FL, Dayton OH) for location-based analysis
 
 See **[CLAUDE.md](CLAUDE.md)** for detailed schema documentation, relationships, and sample queries.
 
@@ -575,13 +597,22 @@ UNION ALL
 SELECT 'SPatient.SPatient', COUNT(*) FROM SPatient.SPatient"
 ```
 
-**Expected output**:
+**Expected output** (base data):
 ```
 TableName                 RecordCount
 RxOut.RxOutpat           20
 RxOut.RxOutpatFill       31
 BCMA.BCMAMedicationLog   20
 SPatient.SPatient        10
+```
+
+**With elderly patient cohort** (if _add_elderly_patients.sql was run):
+```
+TableName                 RecordCount
+RxOut.RxOutpat           62
+RxOut.RxOutpatFill       31
+BCMA.BCMAMedicationLog   40
+SPatient.SPatient        15
 ```
 
 #### 4. Verify Table Relationships
@@ -1002,6 +1033,8 @@ med-data/
 │   └── cdwwork/                       # CDW cdwork database
 │       ├── create/                    # Table creation scripts
 │       └── insert/                    # Data population scripts
+│           ├── _master.sql            # Master insert script (base data)
+│           └── _add_elderly_patients.sql  # Elderly patient cohort with DDI scenarios
 ├── src/                               # Python utilities
 │   ├── create_sample_extract.py       # Extract file generator
 │   ├── constants_sample_extract.py    # Schema definitions
