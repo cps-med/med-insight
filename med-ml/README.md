@@ -34,6 +34,7 @@ med-ml/
 ├── FEATURE_ENGINEERING_GUIDE.md          # Guide to feature engineering approach
 ├── DEMOGRAPHICS_IMPLEMENTATION.md        # Demographics data implementation details
 ├── CLUSTERING_AND_ANALYSIS_GUIDE.md      # Guide for clustering and analysis phase
+├── PHYSIONET_INTEGRATION_GUIDE.md        # PhysioNet MIMIC-IV community care integration plan
 └── README.md                             # This file
 ```
 
@@ -254,9 +255,19 @@ The initial use case identifies DDI risks from patient prescription data:
 **Upcoming (🔜)**:
 - 🔜 Predictive modeling (risk scores, classification)
 - 🔜 Model evaluation and validation
+- 🔜 PhysioNet MIMIC-IV integration for community care data (Phase 2)
 - 🔜 Integration with med-view dashboard
 
 ## Additional Resources
 
 - **MinIO Console**: http://localhost:9001 (login with credentials from .env)
 - **Root .env**: `/Users/chuck/swdev/med/med-insight/.env` (shared configuration)
+
+## Additional Documentation
+
+Comprehensive guides are available for understanding the methodology and implementation approach:
+
+- **[FEATURE_ENGINEERING_GUIDE.md](FEATURE_ENGINEERING_GUIDE.md)** - Detailed feature engineering methodology for DDI risk analysis
+- **[DEMOGRAPHICS_IMPLEMENTATION.md](DEMOGRAPHICS_IMPLEMENTATION.md)** - Patient demographics data integration and processing details
+- **[CLUSTERING_AND_ANALYSIS_GUIDE.md](CLUSTERING_AND_ANALYSIS_GUIDE.md)** - Strategy guide for patient risk clustering and pattern analysis
+- **[PHYSIONET_INTEGRATION_GUIDE.md](PHYSIONET_INTEGRATION_GUIDE.md)** - PhysioNet MIMIC-IV community care data integration plan (Phase 2)

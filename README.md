@@ -6,9 +6,9 @@ Built as an end-to-end solution, Med-Insight integrates data from multiple clini
 
 The complete Med-Insight application consists of four subsystems, organized as subdirectories under the the parent _med-insight_ folder. These subsystems/components consist of:
 
-* **med-data:** Mock data sources for med-insight development and testing (15 patients, 270+ records, DDI scenarios)
+* **med-data:** Mock data sources for med-insight development and testing (15 patients, 270+ records, DDI scenarios, PhysioNet MIMIC integration planned)
 * **med-etl:** ETL functionality to retreive, process, and store data in a data mart
-* **med-ml:** AI and Machine learning layer for risk analysis and pattern discovery (DDI risk analysis)
+* **med-ml:** AI and Machine learning layer for drug-drug interaction (DDI) risk analysis using clustering and predictive modeling
 * **med-view:** Web UI for medical data analysis, reporting, and visualization
 
 ## Getting Started
@@ -68,3 +68,10 @@ Refer to the README.md files in each of the four subsystems for information on t
 
 ## GitHub Issues
 GitHub Issues is used to track and manage development work across all four subsystems in a lightweight but structured manner. Each issue represents a coding task and should include relevant context and status updates. Once a task is complete, it can be closed with a comment.
+
+## Additional Documentation
+For detailed technical guidance and methodology documentation, see the **med-ml** subsystem:
+- **FEATURE_ENGINEERING_GUIDE.md** - Feature engineering approach for DDI risk analysis
+- **DEMOGRAPHICS_IMPLEMENTATION.md** - Patient demographics integration details
+- **CLUSTERING_AND_ANALYSIS_GUIDE.md** - Patient risk clustering strategy and analysis methodology
+- **PHYSIONET_INTEGRATION_GUIDE.md** - PhysioNet MIMIC-IV community care data integration plan

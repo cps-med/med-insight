@@ -8,7 +8,7 @@ This guide outlines the integration of PhysioNet MIMIC-IV clinical database into
 
 ### Use Case
 
-Expand the current 25-patient VA cohort to include community care medication episodes, enabling:
+Expand the current 25-patient VA cohort (10 base + 5 elderly + 10 expansion) to include community care medication episodes, enabling:
 - **Care coordination analysis** across VA and non-VA providers
 - **DDI detection** spanning multiple care settings
 - **Transition of care** pattern identification
@@ -17,8 +17,32 @@ Expand the current 25-patient VA cohort to include community care medication epi
 ### Current State
 
 - ✅ **Phase 1 Complete**: 25 VA patients with medications from RxOut (outpatient) and BCMA (inpatient)
+  - Base cohort (10 patients) + Elderly cohort (5 patients) + Expansion cohort (10 patients)
+  - Loaded via `_master.sql`, `add_elderly_patients.sql`, and `add_expansion_patients.sql`
 - ✅ **Notebooks 01-06 Complete**: Data prep, exploration, cleaning, features, clustering, analysis
-- 🔜 **Phase 2**: Add MIMIC-IV community care medications
+  - All Phase 1 analysis complete and validated
+- 🔜 **Phase 2**: Add MIMIC-IV community care medications (ready to implement)
+
+### Prerequisites
+
+Before starting Phase 2, verify the following are in place:
+
+**Infrastructure (Already Completed):**
+- ✅ Docker Desktop running with containers: `sqlserver2019`, `med-insight-minio`
+- ✅ MinIO buckets created: `med-sandbox`, `med-data` (see med-data README)
+- ✅ Python 3.11 virtual environment: `~/swdev/med/med-insight/.venv`
+
+**Phase 1 Data (Already Completed):**
+- ✅ CDWWork database with 25-patient cohort (expansion cohort loaded)
+- ✅ Notebooks 01-06 executed successfully
+- ✅ Existing data in MinIO:
+  - `med-data/v1_raw/ddi/` - DDI reference data
+  - `med-data/v1_raw/medications/` - VA medication data (25 patients)
+  - `med-data/v1_raw/demographics/` - Patient demographics
+  - `med-data/v2_clean/` - Cleaned datasets
+  - `med-data/v3_features/` - Feature-engineered datasets
+
+**Ready to Start:** Phase 2 community care integration
 
 ### Data Source Strategy: MIMIC-IV Demo (Recommended)
 
@@ -429,13 +453,15 @@ CREATE TABLE Dim.MIMICPatientMapping (
 );
 ```
 
-**Example Mappings:**
+**Example Mappings (After Patient Selection):**
 
 | VAPatientSID | MIMICSubjectID | Rationale |
 |--------------|----------------|-----------|
-| 1011 | 10000032 | 72yo male, CHF, AFib |
-| 1012 | 10000084 | 68yo female, anticoagulation |
-| 1013 | 10000175 | 77yo male, complex cardiac |
+| 1011 | [TBD] | 72yo male, CHF, AFib |
+| 1012 | [TBD] | 68yo female, anticoagulation |
+| 1013 | [TBD] | 77yo male, complex cardiac |
+
+*Note: MIMICSubjectID values to be determined during Step 2 (Initial Data Exploration)*
 
 ---
 
@@ -639,14 +665,6 @@ logger.info("\n✅ MIMIC data preparation complete!")
 logger.info(f"Data written to: {DEST_BUCKET}/v1_raw/mimic/")
 ```
 
-**Add to config.py:**
-
-```python
-# MIMIC source and destination paths
-SOURCE_MIMIC_PATH = "mimic-data/"
-V1_RAW_MIMIC_PREFIX = "v1_raw/mimic/"
-```
-
 **MinIO Structure After Dataprep:**
 
 ```
@@ -713,20 +731,26 @@ logger.info(f"Loaded {len(df_mimic_rx):,} prescriptions for {df_mimic_patients['
 # Cell 3: Define VA Patient Mapping
 # Map 10 VA patients to MIMIC patients based on similar demographics
 
+# NOTE: MIMIC subject_id values below are PLACEHOLDERS
+# ACTION REQUIRED: After downloading MIMIC-IV Demo, run Step 2 exploration
+# to identify actual MIMIC patient IDs matching VA patient profiles,
+# then update the MIMICSubjectID values in the mapping below.
+
 patient_mapping = pd.DataFrame([
-    {'VAPatientSID': 1011, 'MIMICSubjectID': 10000032, 'Rationale': '72yo male, CHF, AFib, complex cardiac'},
-    {'VAPatientSID': 1012, 'MIMICSubjectID': 10000084, 'Rationale': '68yo female, anticoagulation therapy'},
-    {'VAPatientSID': 1013, 'MIMICSubjectID': 10000175, 'Rationale': '77yo male, polypharmacy, multiple cardiac meds'},
-    {'VAPatientSID': 1014, 'MIMICSubjectID': 10000456, 'Rationale': '70yo female, NSAID + anticoagulation'},
-    {'VAPatientSID': 1015, 'MIMICSubjectID': 10000623, 'Rationale': '82yo male, highest med count, renal concerns'},
-    {'VAPatientSID': 1016, 'MIMICSubjectID': 10000891, 'Rationale': '28yo male, mental health, PTSD'},
-    {'VAPatientSID': 1019, 'MIMICSubjectID': 10001204, 'Rationale': '48yo female, depression + HTN'},
-    {'VAPatientSID': 1021, 'MIMICSubjectID': 10001587, 'Rationale': '58yo female, diabetes, CHF'},
-    {'VAPatientSID': 1023, 'MIMICSubjectID': 10001923, 'Rationale': '67yo female, depression, diabetes'},
-    {'VAPatientSID': 1024, 'MIMICSubjectID': 10002341, 'Rationale': '74yo male, complex cardiac, CKD'}
+    {'VAPatientSID': 1011, 'MIMICSubjectID': '[TBD]', 'Rationale': '72yo male, CHF, AFib, complex cardiac'},
+    {'VAPatientSID': 1012, 'MIMICSubjectID': '[TBD]', 'Rationale': '68yo female, anticoagulation therapy'},
+    {'VAPatientSID': 1013, 'MIMICSubjectID': '[TBD]', 'Rationale': '77yo male, polypharmacy, multiple cardiac meds'},
+    {'VAPatientSID': 1014, 'MIMICSubjectID': '[TBD]', 'Rationale': '70yo female, NSAID + anticoagulation'},
+    {'VAPatientSID': 1015, 'MIMICSubjectID': '[TBD]', 'Rationale': '82yo male, highest med count, renal concerns'},
+    {'VAPatientSID': 1016, 'MIMICSubjectID': '[TBD]', 'Rationale': '28yo male, mental health, PTSD'},
+    {'VAPatientSID': 1019, 'MIMICSubjectID': '[TBD]', 'Rationale': '48yo female, depression + HTN'},
+    {'VAPatientSID': 1021, 'MIMICSubjectID': '[TBD]', 'Rationale': '58yo female, diabetes, CHF'},
+    {'VAPatientSID': 1023, 'MIMICSubjectID': '[TBD]', 'Rationale': '67yo female, depression, diabetes'},
+    {'VAPatientSID': 1024, 'MIMICSubjectID': '[TBD]', 'Rationale': '74yo male, complex cardiac, CKD'}
 ])
 
-logger.info(f"Defined mapping for {len(patient_mapping)} VA patients to MIMIC patients")
+logger.info(f"Defined mapping template for {len(patient_mapping)} VA patients")
+logger.info("⚠ ACTION REQUIRED: Update MIMICSubjectID values with actual MIMIC patient IDs")
 ```
 
 ```python
@@ -849,6 +873,32 @@ logger.info("\n✅ Integration validation complete!")
 - `Sta3n = 999` marks community care records
 - Patient mapping can be refined based on actual MIMIC patient demographics
 
+### Step 9B: Update Configuration File
+
+**Update:** `med-ml/src/config.py`
+
+Add the following configuration constants to support MIMIC integration:
+
+```python
+# =========================================================================
+# MIMIC-IV Community Care Integration Configuration
+# =========================================================================
+
+# MIMIC source and destination paths
+SOURCE_MIMIC_PATH = "mimic-data/"
+V1_RAW_MIMIC_PREFIX = "v1_raw/mimic/"
+
+# Community care indicator
+COMMUNITY_CARE_STA3N = 999  # Sta3n value to identify community care records
+
+# Extended date range to include community care (Q4 2024)
+from datetime import date
+DEFAULT_START_DATE = date(2024, 1, 1)   # Includes Q4 2024 community care
+DEFAULT_END_DATE = date(2025, 12, 31)   # Extends through VA care period
+```
+
+**Note:** These configuration constants centralize all MIMIC-related settings for consistent use across notebooks.
+
 ### Step 10: Existing Notebooks Work Automatically
 
 **No changes needed to existing notebooks!**
@@ -905,23 +955,6 @@ if 'MIMIC-Community' in df_medications['SourceSystem'].values:
         logger.info(f"  VA meds: {len(va)} ({va['MedicationDateTime'].min().date() if len(va) > 0 else 'N/A'} onward)")
 else:
     logger.info("\n⚠ No community care data found. Run mimic_patient_selection.ipynb first.")
-```
-
-**Optional: Update config.py**
-
-Add MIMIC configuration constants:
-
-```python
-# MIMIC source and destination paths
-SOURCE_MIMIC_PATH = "mimic-data/"
-V1_RAW_MIMIC_PREFIX = "v1_raw/mimic/"
-
-# Community care indicator
-COMMUNITY_CARE_STA3N = 999
-
-# Date range to include community care (if not already covering 2024)
-DEFAULT_START_DATE = date(2024, 1, 1)  # Extends to include Q4 2024 community care
-DEFAULT_END_DATE = date(2025, 12, 31)
 ```
 
 ---
@@ -1087,50 +1120,104 @@ logger.info("=" * 60)
        logger.info("   No example DDI found (depends on MIMIC patient selection)")
    ```
 
-### Step 12: Re-run Complete Pipeline
+### Step 12: Execute Integration Pipeline
 
-**Execution Order:**
+**Recommended Execution Strategy:**
+
+Phase 2 integration follows a layered approach - integrate community care first, validate, then proceed with analysis.
+
+#### **Tier 1: Community Care Integration** (Required)
+
+Execute new Phase 2 notebooks to integrate MIMIC community care data:
 
 ```bash
-# Navigate to med-ml directory
 cd ~/swdev/med/med-insight/med-ml/src
-
-# Activate virtual environment
 source ../../.venv/bin/activate
 
-# Execute notebooks in order
-jupyter nbconvert --to notebook --execute 01a_dataprep_ddi.ipynb
-jupyter nbconvert --to notebook --execute 01b_dataprep_medications.ipynb
-jupyter nbconvert --to notebook --execute 01c_dataprep_demographics.ipynb
-jupyter nbconvert --to notebook --execute 01d_dataprep_mimic.ipynb          # NEW
-jupyter nbconvert --to notebook --execute mimic_patient_selection.ipynb     # NEW
+# Convert MIMIC CSV to Parquet
+jupyter nbconvert --to notebook --execute 01d_dataprep_mimic.ipynb
+
+# Integrate community care with VA medications
+jupyter nbconvert --to notebook --execute mimic_patient_selection.ipynb
+```
+
+**Checkpoint:** Verify integration succeeded (check for "✅ Community care integration complete!" message)
+
+#### **Tier 2: Validation** (Required)
+
+Re-run exploration notebook to verify community care integration:
+
+```bash
+# Should now show 3 source systems: RxOut, BCMA, MIMIC-Community
 jupyter nbconvert --to notebook --execute 02_explore.ipynb
+```
+
+**Checkpoint:** Verify output shows:
+- 3 source systems in medication data
+- 10 patients with community care
+- Community care dates in Q4 2024
+- VA care dates in 2025+
+
+#### **Tier 3: Complete Re-analysis** (Recommended)
+
+Re-run remaining notebooks to incorporate community care insights:
+
+```bash
+# Clean, feature engineer, cluster, and analyze with combined data
 jupyter nbconvert --to notebook --execute 03_clean.ipynb
 jupyter nbconvert --to notebook --execute 04_features.ipynb
 jupyter nbconvert --to notebook --execute 05_clustering.ipynb
 jupyter nbconvert --to notebook --execute 06_analysis.ipynb
 ```
 
-**Alternative: Run in VS Code**
+**Benefits:**
+- Clustering reflects dual-source medication patterns
+- Features include care transition characteristics
+- Analysis reveals care coordination insights
 
-Open each notebook in VS Code and run all cells interactively.
+#### **Alternative: Interactive Execution**
 
-**Expected Changes:**
+Instead of batch execution, run notebooks interactively in VS Code or JupyterLab:
 
-| Notebook | Before (VA only) | After (VA + Community) | Change |
-|----------|------------------|------------------------|--------|
-| 01d | N/A | MIMIC CSV → Parquet | New: 6 MIMIC tables in v1_raw/mimic/ |
-| mimic_patient_selection | N/A | Patient mapping & integration | New: Combined medications dataset |
-| 01b | 25 patients, ~79 meds | Unchanged | VA medications baseline |
-| 02 | 2 sources (RxOut, BCMA) | 3 sources (RxOut, BCMA, MIMIC-Community) | +1 source, +40-100 meds |
-| 03 | VA cleaning rules | Same rules apply to all sources | Automatic |
-| 04 | Features for VA only | Enhanced with community patterns | Temporal features richer |
-| 05 | Clusters based on VA only | Dual-source clustering | Better stratification |
-| 06 | VA-only analysis | Care coordination insights | New analysis dimension |
+```bash
+# Start JupyterLab
+jupyter lab
+
+# OR open in VS Code
+code ~/swdev/med/med-insight/med-ml/src/
+# Open notebooks and run cells interactively
+```
+
+**Advantages:** Better visibility into intermediate results, easier debugging
+
+---
+
+**Expected Changes by Notebook:**
+
+| Notebook | Before (Phase 1) | After (Phase 2) | Key Changes |
+|----------|------------------|-----------------|-------------|
+| **01d** | N/A | New notebook | Creates v1_raw/mimic/ with 6 Parquet files |
+| **mimic_selection** | N/A | New notebook | Replaces v1_raw/medications/ with combined dataset |
+| **02_explore** | 2 sources (RxOut, BCMA)<br>~62 meds, 25 patients | 3 sources (RxOut, BCMA, MIMIC-Community)<br>~100-120 meds, 25 patients | +1 source system, +40-60 community meds |
+| **03_clean** | VA-only cleaning | Same cleaning rules applied to all 3 sources | Automatic - no changes needed |
+| **04_features** | VA-only features | Enhanced with temporal transition features | Richer care coordination patterns |
+| **05_clustering** | Single-source clusters | Dual-source clustering | Better patient stratification |
+| **06_analysis** | VA-only insights | Care coordination analysis | New dimension: community→VA transitions |
+
+---
+
+**Timeline Estimate:**
+
+- **Tier 1 (Integration):** 15-30 minutes
+- **Tier 2 (Validation):** 10-15 minutes
+- **Tier 3 (Re-analysis):** 30-60 minutes
+- **Total:** ~1-2 hours for complete Phase 2 integration and re-analysis
 
 ### Step 13: Analyze Community Care Impact
 
 **New Analysis Questions:**
+
+Once Phase 2 integration is complete and notebooks 05-06 are re-run, explore these care coordination questions:
 
 1. **Care Coordination:**
    - How many medications continue from community → VA?
@@ -1152,11 +1239,9 @@ Open each notebook in VS Code and run all cells interactively.
    - Does community medication history predict VA complexity?
    - Transition risk factors
 
-**Sample Analysis Code:**
+**Sample Analysis Code for 06_analysis.ipynb:**
 
 ```python
-# In 06_analysis.ipynb
-
 # Analyze care transitions for community care patients
 community_patients = [1011, 1012, 1013, 1014, 1015, 1016, 1019, 1021, 1023, 1024]
 
@@ -1263,6 +1348,178 @@ If you later need the full MIMIC-IV dataset (300K+ patients):
 
 ---
 
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Issue 1: MinIO Connection Errors
+**Symptoms:** `EndpointConnectionError`, timeout errors, or "Unable to connect to MinIO"
+
+**Solutions:**
+1. Verify MinIO container is running:
+   ```bash
+   docker ps | grep minio
+   # Should show: med-insight-minio with STATUS "Up"
+   ```
+
+2. Check MinIO endpoint configuration:
+   ```python
+   # In config.py
+   MINIO_ENDPOINT = "localhost:9000"  # No http://, just host:port
+   ```
+
+3. Test MinIO connectivity:
+   ```bash
+   # Access MinIO Console
+   open http://localhost:9001
+   # Should open MinIO web interface
+   ```
+
+4. Restart MinIO if needed:
+   ```bash
+   docker restart med-insight-minio
+   docker logs med-insight-minio  # Check for errors
+   ```
+
+#### Issue 2: MIMIC Date Conversion Problems
+**Symptoms:** Community care dates still showing 2100-2200 range instead of 2024
+
+**Solutions:**
+1. Verify `shift_date_to_2024()` function in `mimic_patient_selection.ipynb` (Cell 4):
+   ```python
+   # Check this function is correctly defined and applied
+   df_selected['starttime_2024'] = df_selected['starttime'].apply(shift_date_to_2024)
+   df_selected['stoptime_2024'] = df_selected['stoptime'].apply(shift_date_to_2024)
+   ```
+
+2. Check date transformation output:
+   ```python
+   # Add diagnostic logging
+   logger.info(f"Original MIMIC dates: {df_selected['starttime'].min()} to {df_selected['starttime'].max()}")
+   logger.info(f"Converted to 2024: {df_selected['starttime_2024'].min()} to {df_selected['starttime_2024'].max()}")
+   ```
+
+3. Ensure using converted columns in final output:
+   ```python
+   # Use starttime_2024 and stoptime_2024, NOT starttime/stoptime
+   'MedicationDateTime': df_selected['starttime_2024'],  # Correct
+   ```
+
+#### Issue 3: Patient Mapping IDs Don't Exist
+**Symptoms:** `KeyError` or no medications found for mapped MIMIC subject_ids
+
+**Solutions:**
+1. Run Step 2 exploration code to identify actual MIMIC patient IDs:
+   ```python
+   # Check available MIMIC patients
+   print(df_prescriptions['subject_id'].unique()[:20])
+
+   # Find patients with sufficient medications
+   patient_med_counts = df_prescriptions['subject_id'].value_counts()
+   print(patient_med_counts.head(20))
+   ```
+
+2. Update `patient_mapping` DataFrame with valid MIMIC subject_ids
+
+3. Verify mapping worked:
+   ```python
+   # Check that mapped patients have prescriptions
+   mimic_subjects = patient_mapping['MIMICSubjectID'].tolist()
+   df_selected = df_mimic_rx[df_mimic_rx['subject_id'].isin(mimic_subjects)]
+   logger.info(f"Found {len(df_selected)} prescriptions for {len(mimic_subjects)} patients")
+   ```
+
+#### Issue 4: Temporal Validation Fails
+**Symptoms:** Warning messages showing community care NOT before VA care
+
+**Solutions:**
+1. Check VA medication dates in CDWWork database:
+   ```sql
+   -- Verify VA medication start dates
+   SELECT PatientSID, MIN(IssueDateTime) as FirstVAMed
+   FROM RxOut.RxOutpat
+   WHERE PatientSID IN (1011, 1012, 1013, 1014, 1015, 1016, 1019, 1021, 1023, 1024)
+   GROUP BY PatientSID
+   ORDER BY PatientSID;
+   ```
+
+2. Adjust MIMIC date shifting to ensure Q4 2024 (Oct-Dec 2024) precedes VA dates:
+   ```python
+   # If VA meds start in early 2025, community care should be late 2024
+   # Adjust the shift_date_to_2024() function's month calculation if needed
+   ```
+
+3. Verify temporal separation in validation (Cell 8 of mimic_patient_selection.ipynb)
+
+#### Issue 5: Combined Dataset Not Showing in Downstream Notebooks
+**Symptoms:** Notebooks 02-06 still show only VA data, no community care
+
+**Solutions:**
+1. Verify `mimic_patient_selection.ipynb` completed successfully and wrote combined dataset:
+   ```python
+   # Check that Cell 7 executed and logged success message:
+   # "✅ Community care integration complete!"
+   ```
+
+2. Verify file was written to MinIO:
+   ```bash
+   # Using MinIO Console
+   # Navigate to: med-data → v1_raw → medications → patient_medications.parquet
+   # Check file timestamp (should be recent)
+   ```
+
+3. Re-run notebooks 02-06 to pick up new data:
+   ```bash
+   # Notebooks read from v1_raw/medications/patient_medications.parquet
+   # Must re-execute to see community care data
+   jupyter nbconvert --to notebook --execute 02_explore.ipynb
+   ```
+
+#### Issue 6: Missing Dependencies
+**Symptoms:** `ModuleNotFoundError` for s3fs, boto3, or pyarrow
+
+**Solutions:**
+```bash
+# Activate virtual environment
+source ~/.venv/bin/activate
+
+# Install missing packages
+pip install s3fs boto3 pyarrow
+
+# Update requirements.txt
+pip freeze > requirements.txt
+```
+
+---
+
+### Getting Help
+
+If issues persist after trying these solutions:
+
+1. **Check Logs:**
+   ```bash
+   # MinIO logs
+   docker logs med-insight-minio
+
+   # SQL Server logs
+   docker logs sqlserver2019
+   ```
+
+2. **Verify Environment:**
+   ```bash
+   # Check .env file exists and has correct values
+   cat ~/swdev/med/med-insight/.env | grep MINIO
+   ```
+
+3. **Review Prerequisites:** Ensure all Phase 1 components are working correctly before adding Phase 2 integration
+
+4. **Consult Documentation:**
+   - med-data README: Infrastructure setup
+   - med-ml README: Notebook execution guidance
+   - MIMIC-IV Docs: https://mimic.mit.edu/docs/iv/
+
+---
+
 ## Resources
 
 ### PhysioNet - MIMIC-IV Demo (Primary)
@@ -1348,14 +1605,21 @@ Consider alternatives to MIMIC-IV:
 
 ## Document Version
 
-- **Version**: 1.2
+- **Version**: 1.3
 - **Created**: 2024-11-29
-- **Last Updated**: 2024-11-29
-- **Status**: Phase 2 Planning - Ready for Immediate Implementation
+- **Last Updated**: 2025-01-29
+- **Status**: Phase 2 Planning - Ready for Implementation (Phase 1 Complete)
 - **Major Changes**:
   - v1.0 - Initial guide with full MIMIC-IV credentialing approach
   - v1.1 - Updated to prioritize MIMIC-IV Demo (no credentialing required)
   - v1.2 - **Architectural shift to MinIO medallion pattern** (consistency with DDI approach)
+  - v1.3 - **Updated for Phase 1 completion**:
+    - Clarified prerequisites (assumes infrastructure and Phase 1 complete)
+    - Marked MIMIC patient IDs as placeholders requiring user verification
+    - Consolidated all config.py changes into Step 9B
+    - Added comprehensive Troubleshooting section (6 common issues)
+    - Replaced execution strategy with tiered approach (Integration → Validation → Re-analysis)
+    - Clarified 25-patient cohort composition (10 base + 5 elderly + 10 expansion)
 - **Architecture**: MinIO medallion (med-sandbox → v1_raw → integration via Parquet)
 - **Next Review**: After MIMIC-IV Demo integration complete
 

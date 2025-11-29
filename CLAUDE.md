@@ -132,14 +132,14 @@ jupyter lab
 # Select kernel: .venv (Python 3.11)
 ```
 
-**Tech Stack**: JupyterLab + Pandas + scikit-learn + MinIO
+**Tech Stack**: JupyterLab + Pandas + scikit-learn + MinIO + SQL Server
 **Notebooks**:
-- `01a/b/c_dataprep_*.ipynb` - Data preparation (DDI, medications, demographics)
-- `02_explore.ipynb` - Exploratory data analysis
-- `03_clean.ipynb` - Data cleaning
-- `04_features.ipynb` - Feature engineering
-- `05_clustering.ipynb` - Patient risk clustering (pending)
-- `06_analysis.ipynb` - Results analysis (pending)
+- `01a/b/c_dataprep_*.ipynb` - Data preparation (DDI, medications, demographics) ✅
+- `02_explore.ipynb` - Exploratory data analysis ✅
+- `03_clean.ipynb` - Data cleaning ✅
+- `04_features.ipynb` - Feature engineering ✅
+- `05_clustering.ipynb` - Patient risk clustering 🔄
+- `06_analysis.ipynb` - Results analysis 🔜
 
 **Data Storage**: MinIO medallion architecture (v1_raw → v2_clean → v3_features → v4_models)
 
@@ -157,9 +157,14 @@ cd sql-server/cdwwork/create
 cd ../insert
 ./_master.sh
 
-# Optional: Add elderly patient cohort with DDI scenarios
-sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -i _add_elderly_patients.sql
+# Optional: Expand patient cohort
+# Option 1: Add elderly patient cohort (15 total patients)
+sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -d CDWWork -i add_elderly_patients.sql
 # Adds 5 elderly patients (ages 68-82) with 18 DDI scenarios
+
+# Option 2: Add expansion cohort (25 total patients)
+sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -d CDWWork -i add_expansion_patients.sql
+# Adds 10 patients with balanced age/complexity distribution, mental health emphasis
 
 # Generate sample extract files
 cd ~/swdev/med/med-insight/med-data
@@ -227,17 +232,23 @@ No formal test suite is currently implemented. Testing is primarily manual via:
    - Interactive CLI for ETL operations
 
 3. **med-ml** (AI/ML Layer)
-   - **Status**: Active development - feature engineering complete
-   - **Dependencies**: MinIO object storage from med-data
-   - **Data Sources**: Kaggle datasets stored in MinIO (DDI, medications, demographics)
+   - **Status**: Active development - feature engineering complete, clustering in progress
+   - **Dependencies**: MinIO object storage and CDWWork database from med-data
+   - **Data Sources**:
+     - Kaggle DDI reference data stored in MinIO
+     - Patient medications from CDWWork database (RxOut, BCMA schemas)
+     - Patient demographics from CDWWork database (SPatient schema)
    - **Current Progress**:
      - ✅ Data preparation (3 notebooks: DDI, medications, demographics)
      - ✅ Exploratory data analysis
      - ✅ Data cleaning and validation
      - ✅ Feature engineering (19 patient-level features)
-     - 🔜 Clustering and predictive modeling (next phase)
-   - **Tech Stack**: JupyterLab, Pandas, scikit-learn, PyArrow, MinIO
+     - 🔄 Patient risk clustering (in progress)
+     - 🔜 Pattern analysis and predictive modeling
+     - 🔜 PhysioNet MIMIC-IV integration for community care data (Phase 2)
+   - **Tech Stack**: JupyterLab, Pandas, scikit-learn, PyArrow, MinIO, SQL Server
    - **Architecture**: Medallion pattern (v1_raw → v2_clean → v3_features → v4_models)
+   - **Documentation**: Comprehensive guides for feature engineering, demographics, clustering, and PhysioNet integration
 
 4. **med-view** (Web Dashboard)
    - **Status**: Early development stage
@@ -251,11 +262,13 @@ No formal test suite is currently implemented. Testing is primarily manual via:
 - Engine: SQL Server 2019
 - Purpose: Mock VA Corporate Data Warehouse
 - Schemas: Dim, Inpat, SPatient, SStaff, RxOut, BCMA
-- 30+ tables with ~270+ sample records
-- **Patient Cohort**: 15 patients (10 base + 5 elderly with DDI scenarios)
-- **Medications**: 62 outpatient prescriptions, 40 BCMA administration events
-- **DDI Testing**: 18 clinically significant drug-drug interaction pairs
-- **Geographic Data**: 3 VA facilities (Sta3n 508-Atlanta, 516-Bay Pines, 552-Dayton)
+- 30+ tables with ~270-600+ sample records (expandable)
+- **Patient Cohorts**: Expandable from 10 base → 15 (+elderly) → 25 (+expansion) patients
+- **Medications**: 20-120+ outpatient prescriptions, 20-40+ BCMA administration events
+- **DDI Testing**: 18-28+ clinically significant drug-drug interaction scenarios
+- **Geographic Data**: 4 VA facilities (Sta3n 508-Atlanta, 516-Bay Pines, 552-Dayton, 688-Washington DC)
+- **Mental Health**: Expansion cohort emphasizes mental health medications and interactions
+- **Phase 2 Planning**: PhysioNet MIMIC-IV community care data integration (see med-ml)
 
 **Target Database (Extract)** - Created by med-etl
 - Engine: SQL Server 2019
@@ -283,7 +296,8 @@ Both databases run in the same Docker container but maintain logical separation.
 
 **med-data SQL scripts** (sql-server/cdwwork/insert/):
 - `_master.sql` - Master insert script for base patient cohort (10 patients)
-- `_add_elderly_patients.sql` - Incremental script for elderly cohort with DDI scenarios (5 patients)
+- `add_elderly_patients.sql` - Incremental script for elderly cohort with DDI scenarios (+5 patients, 15 total)
+- `add_expansion_patients.sql` - Incremental script for expansion cohort with mental health emphasis (+10 patients, 25 total)
 
 **med-view structure**:
 - `main.py` - FastAPI application entry point
@@ -299,9 +313,14 @@ Both databases run in the same Docker container but maintain logical separation.
 - `02_explore.ipynb` - Exploratory data analysis
 - `03_clean.ipynb` - Data cleaning and validation
 - `04_features.ipynb` - Feature engineering (patient & DDI features)
+- `05_clustering.ipynb` - Patient risk clustering (in progress)
+- `06_analysis.ipynb` - Results analysis (pending)
+
+**med-ml documentation**:
 - `FEATURE_ENGINEERING_GUIDE.md` - Feature engineering methodology
 - `DEMOGRAPHICS_IMPLEMENTATION.md` - Demographics integration details
-- `CLUSTERING_AND_ANALYSIS_GUIDE.md` - Clustering strategy guide
+- `CLUSTERING_AND_ANALYSIS_GUIDE.md` - Clustering strategy and analysis guide
+- `PHYSIONET_INTEGRATION_GUIDE.md` - PhysioNet MIMIC-IV community care integration plan (Phase 2)
 
 ## Environment Configuration
 
@@ -364,7 +383,9 @@ Some subsystems may use their own `.venv` for isolation. Check subsystem README.
 1. Edit SQL scripts in `med-data/sql-server/cdwwork/create/`
 2. Regenerate database: `cd create && ./_master.sh`
 3. Repopulate base data: `cd ../insert && ./_master.sh`
-4. Optional: Add elderly patient cohort: `sqlcmd ... -i _add_elderly_patients.sql`
+4. Optional expansions:
+   - Add elderly cohort (15 total): `sqlcmd ... -d CDWWork -i add_elderly_patients.sql`
+   - Add expansion cohort (25 total): `sqlcmd ... -d CDWWork -i add_expansion_patients.sql`
 
 **For Extract (med-etl)**:
 1. Edit SQL scripts in `med-etl/dbscript/sql-server/extract/create/`
@@ -483,7 +504,12 @@ pip install -r requirements.txt
 - **Project Lead**: Chuck Sylvester (contact for .env files and setup assistance)
 - **GitHub Issues**: Track development tasks and bugs
 - **Subsystem READMEs**: Detailed setup instructions for each component
-  - `med-data/README.md` - Comprehensive setup guide with 27KB of documentation
+  - `med-data/README.md` - Comprehensive setup guide with expandable patient cohort documentation
   - `med-etl/README.md` - ETL pipeline setup and configuration
-  - `med-view/README.md` - Web dashboard setup
-  - `med-ml/README.md` - AI/ML layer (early stage)
+  - `med-ml/README.md` - AI/ML layer with DDI risk analysis (feature engineering complete, clustering in progress)
+  - `med-view/README.md` - Web dashboard setup (early stage)
+- **med-ml Methodology Guides**: Comprehensive technical documentation
+  - `FEATURE_ENGINEERING_GUIDE.md` - Feature engineering approach for DDI risk analysis
+  - `DEMOGRAPHICS_IMPLEMENTATION.md` - Patient demographics integration details
+  - `CLUSTERING_AND_ANALYSIS_GUIDE.md` - Patient risk clustering strategy and analysis methodology
+  - `PHYSIONET_INTEGRATION_GUIDE.md` - PhysioNet MIMIC-IV community care integration plan (Phase 2)

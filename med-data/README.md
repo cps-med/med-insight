@@ -18,9 +18,11 @@ The data available within med-data is **synthetic** and does not contain PHI or 
 - **MinIO Object Storage**: Mimics ADLS Gen2 for Parquet file storage
 - **Sample Extract Generator**: Creates fixed-length ASCII clinical data files
 - **Pharmacy Data**: Outpatient prescriptions (RxOut) and inpatient medication administration (BCMA)
-- **Realistic Test Data**: 15 patients, 6 providers, 62 prescriptions, 40 BCMA events, 13 inpatient stays
-- **DDI Scenarios**: 5 elderly patients (ages 68-82) with 18 clinically significant drug-drug interactions
-- **Geographic Data**: Patient distribution across 3 VA facilities (Sta3n 508, 516, 552) for location-based analysis
+- **Realistic Test Data**: 25 patients (expandable from 10 base), 6 providers, 120+ prescriptions, 40+ BCMA events, 18 inpatient stays
+- **DDI Scenarios**: Elderly patients (ages 68-82) with 18+ clinically significant drug-drug interactions
+- **Geographic Data**: Patient distribution across 4 VA facilities (Sta3n 508, 516, 552, 688) for location-based analysis
+- **Expandable Dataset**: Incremental patient cohort scripts to grow from 10 → 15 → 25 patients
+- **Future Integration**: PhysioNet MIMIC-IV community care data planned (Phase 2)
 
 ---
 
@@ -479,20 +481,29 @@ cd ../insert
 
 This populates all tables with realistic test data.
 
-**Optional: Add Elderly Patient Cohort**
-After loading the base data, you can optionally add an expanded elderly patient cohort with DDI scenarios:
+**Optional: Expand Patient Cohort**
+After loading the base data (10 patients), you can expand the cohort with additional patients:
+
+**Option 1: Add Elderly Patient Cohort (15 total patients)**
 ```bash
 cd ../insert
-sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -i _add_elderly_patients.sql
+sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -d CDWWork -i add_elderly_patients.sql
 ```
+This adds 5 elderly patients (ages 68-82) with DDI scenarios, bringing total to 15 patients.
 
-This script adds:
-- 5 elderly patients (ages 68-82) with multiple comorbidities
-- 42 outpatient prescriptions including DDI medication pairs
-- 20 BCMA medication administration records
-- 5 inpatient admissions
-- 18 clinically significant drug-drug interaction scenarios
-- Geographic distribution across 3 VA stations (508, 516, 552)
+**Option 2: Add Expansion Cohort (25 total patients)**
+```bash
+cd ../insert
+sqlcmd -S 127.0.0.1,1433 -U sa -P "$MSSQL_SA_PASSWORD" -d CDWWork -i add_expansion_patients.sql
+```
+This adds 10 patients with balanced age/complexity distribution (ages 25-82), bringing total to 25 patients.
+Includes mental health emphasis (7/10 with mental health conditions) and diverse DDI scenarios.
+
+**Cohort Summary**:
+- Base: 10 patients (via _master.sql)
+- +Elderly: 5 patients → 15 total (18 DDI scenarios)
+- +Expansion: 10 patients → 25 total (28+ DDI scenarios)
+- Geographic distribution: 4 VA stations (508, 516, 552, 688)
 
 **Note**: The `_master.sh` scripts use the `MSSQL_SA_PASSWORD` environment variable from your `.env` file.
 
@@ -540,22 +551,24 @@ sqlcmd -S 127.0.0.1,1433 -U sa -P 'YourPassword' -i _master.sql
 
 The **CDWWork** database simulates VA Corporate Data Warehouse structure with 6 schemas:
 
-| Schema | Purpose | Tables | Sample Records |
-|--------|---------|--------|----------------|
+| Schema | Purpose | Tables | Sample Records (Base/Expanded) |
+|--------|---------|--------|---------------------------------|
 | **Dim** | Dimension/reference data | 7 | States, divisions, ward locations |
-| **Inpat** | Inpatient admissions | 3 | 8 inpatient stays |
-| **SPatient** | Patient demographics | 4 | 10 test patients |
+| **Inpat** | Inpatient admissions | 3 | 8/18 inpatient stays |
+| **SPatient** | Patient demographics | 4 | 10/15/25 test patients |
 | **SStaff** | Staff/providers | 2 | 6 providers |
-| **RxOut** | Pharmacy outpatient | 4 | 20 prescriptions, 31 fills |
-| **BCMA** | Medication administration | 4 | 20 administration events |
+| **RxOut** | Pharmacy outpatient | 4 | 20/62/120+ prescriptions |
+| **BCMA** | Medication administration | 4 | 20/40+ administration events |
 
 **Total Tables**: 30+
-**Total Records**: ~270+ across all tables (expanded with elderly patient cohort)
+**Total Records**: ~270+ (base) to 600+ (fully expanded) across all tables
 
 **Recent Enhancements**:
-- **Elderly Patient Cohort**: 5 additional patients (ages 68-82) with polypharmacy and DDI scenarios
-- **DDI Testing Data**: 18 clinically significant drug-drug interaction pairs for medication safety analysis
-- **Geographic Coverage**: Expanded Sta3n distribution (Atlanta GA, Bay Pines FL, Dayton OH) for location-based analysis
+- **Expandable Patient Cohorts**: 10 base → 15 (+elderly) → 25 (+expansion) patients
+- **DDI Testing Data**: 18-28+ clinically significant drug-drug interaction scenarios for medication safety analysis
+- **Geographic Coverage**: 4 VA facilities (Sta3n 508-Atlanta, 516-Bay Pines, 552-Dayton, 688-Washington DC)
+- **Mental Health Data**: Emphasis on mental health medications and interactions in expansion cohort
+- **Phase 2 Planning**: PhysioNet MIMIC-IV integration for community care data (see med-ml subsystem)
 
 See **[CLAUDE.md](CLAUDE.md)** for detailed schema documentation, relationships, and sample queries.
 
@@ -597,23 +610,20 @@ UNION ALL
 SELECT 'SPatient.SPatient', COUNT(*) FROM SPatient.SPatient"
 ```
 
-**Expected output** (base data):
+**Expected output** (varies by cohort size):
 ```
 TableName                 RecordCount
-RxOut.RxOutpat           20
-RxOut.RxOutpatFill       31
-BCMA.BCMAMedicationLog   20
-SPatient.SPatient        10
+                         Base  +Elderly  +Expansion
+RxOut.RxOutpat           20    62        120+
+RxOut.RxOutpatFill       31    31        31+
+BCMA.BCMAMedicationLog   20    40        40+
+SPatient.SPatient        10    15        25
 ```
 
-**With elderly patient cohort** (if _add_elderly_patients.sql was run):
-```
-TableName                 RecordCount
-RxOut.RxOutpat           62
-RxOut.RxOutpatFill       31
-BCMA.BCMAMedicationLog   40
-SPatient.SPatient        15
-```
+**Cohort Determination**:
+- **10 patients**: Base cohort only (_master.sql)
+- **15 patients**: Base + elderly (add_elderly_patients.sql)
+- **25 patients**: Base + expansion (add_expansion_patients.sql)
 
 #### 4. Verify Table Relationships
 
@@ -1033,8 +1043,9 @@ med-data/
 │   └── cdwwork/                       # CDW cdwork database
 │       ├── create/                    # Table creation scripts
 │       └── insert/                    # Data population scripts
-│           ├── _master.sql            # Master insert script (base data)
-│           └── _add_elderly_patients.sql  # Elderly patient cohort with DDI scenarios
+│           ├── _master.sql            # Master insert script (10 base patients)
+│           ├── add_elderly_patients.sql    # +5 elderly patients (→15 total)
+│           └── add_expansion_patients.sql  # +10 expansion patients (→25 total)
 ├── src/                               # Python utilities
 │   ├── create_sample_extract.py       # Extract file generator
 │   ├── constants_sample_extract.py    # Schema definitions
