@@ -1,16 +1,16 @@
 {
   "optimal_k": 3,
-  "silhouette_score": 0.3804475507775422,
-  "inertia": 79.99915500389149,
-  "davies_bouldin_score": 0.884438740316407,
-  "calinski_harabasz_score": 8.625154477482749,
-  "anova_f_statistic": 13.358937337568596,
-  "anova_p_value": 0.0008863768766237748,
-  "pca_variance_explained": 0.6991721234781286,
+  "silhouette_score": 0.3114913078793172,
+  "inertia": 169.58249755660705,
+  "davies_bouldin_score": 1.0245034962828394,
+  "calinski_harabasz_score": 10.081184977869876,
+  "anova_f_statistic": 22.253864823122726,
+  "anova_p_value": 5.188671061255339e-06,
+  "pca_variance_explained": 0.6055521853996081,
   "cluster_names": {
     "0": "Cluster 0",
     "1": "Elderly High-Risk Polypharmacy",
     "2": "Cluster 2"
   },
-  "timestamp": "2025-11-29T08:02:34.212417"
+  "timestamp": "2025-11-29T12:39:02.908918"
 }

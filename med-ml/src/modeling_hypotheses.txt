@@ -1,16 +1,16 @@
 
 MODELING HYPOTHESES AND RECOMMENDATIONS
 DDI Risk Analysis Project - med-ml
-Generated: 2025-11-29 10:04:36
+Generated: 2025-11-29 12:40:20
 ================================================================================
 
 DATASET SUMMARY
 --------------------------------------------------------------------------------
-Total Patients: 15
-Total DDI Pairs: 71
+Total Patients: 25
+Total DDI Pairs: 113
 Clusters Identified: 3
 
-⚠️  IMPORTANT: Current dataset size (N=15) is too small for robust 
+⚠️  IMPORTANT: Current dataset size (N=25) is too small for robust 
 predictive modeling. Minimum recommended: 100-200 patients. These hypotheses are 
 directional insights to be validated with larger dataset.
 
@@ -18,10 +18,10 @@ KEY FINDINGS AND HYPOTHESES
 --------------------------------------------------------------------------------
 
 1. AGE IS A PREDICTOR OF DDI RISK
-   - Age-Risk Correlation: 0.507
-   - Elderly (65+) Risk Factor: 11.52x higher than non-elderly
-   - Mean Risk - Elderly: 9.88
-   - Mean Risk - Non-Elderly: 0.86
+   - Age-Risk Correlation: 0.528
+   - Elderly (65+) Risk Factor: 5.14x higher than non-elderly
+   - Mean Risk - Elderly: 9.91
+   - Mean Risk - Non-Elderly: 1.93
 
    MODELING RECOMMENDATION:
    - Include Age as continuous feature
@@ -30,9 +30,9 @@ KEY FINDINGS AND HYPOTHESES
    - Elderly patients may need separate risk scoring algorithm
 
 2. POLYPHARMACY DRIVES DDI RISK
-   - Polypharmacy Risk Factor: 26.33x higher than non-polypharmacy
-   - Mean Risk - Polypharmacy: 15.80
-   - Mean Risk - Non-Polypharmacy: 0.60
+   - Polypharmacy Risk Factor: 12.31x higher than non-polypharmacy
+   - Mean Risk - Polypharmacy: 10.42
+   - Mean Risk - Non-Polypharmacy: 0.85
 
    MODELING RECOMMENDATION:
    - unique_medications is critical feature
@@ -97,7 +97,7 @@ APPROACH 4: Cluster-Based Ensemble
 DATA REQUIREMENTS FOR MODELING
 --------------------------------------------------------------------------------
 
-CURRENT STATUS: 15 patients - INSUFFICIENT for production models
+CURRENT STATUS: 25 patients - INSUFFICIENT for production models
 
 MINIMUM REQUIREMENTS:
   - Development/Testing: 100-200 patients
