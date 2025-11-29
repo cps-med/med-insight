@@ -1,0 +1,4 @@
+Cluster,Patient_Count,Priority,Avg_Age,High_Risk_Rate_%,Interventions
+Elderly High-Risk Polypharmacy,5,CRITICAL,73.8,100.0,Immediate comprehensive medication review (CMR) | Pharmacist consultation required | Deprescribing evaluation for elderly patients | Weekly monitoring for first month | Care coordination between all providers
+Cluster 2,8,LOW,54.8,12.5,Annual medication review | Standard DDI screening | Routine monitoring
+Cluster 0,2,LOW,62.5,0.0,Annual medication review | Standard DDI screening | Routine monitoring

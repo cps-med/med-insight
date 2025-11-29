@@ -13,7 +13,8 @@ AI and Machine learning layer for Med-Insight
 - **Pandas & NumPy** - Data manipulation
 - **PyArrow** - Parquet file handling
 - **scikit-learn** - Machine learning algorithms
-- **MinIO** - S3-compatible object storage (via boto3 + s3fs)
+- **SQL Server 2019** - Source database for patient medications and demographics (via pyodbc)
+- **MinIO** - S3-compatible object storage for DDI reference data and processed datasets (via boto3 + s3fs)
 
 ## Project Structure
 
@@ -42,12 +43,15 @@ Data processing follows a versioned medallion architecture stored in MinIO:
 
 | Tier | Prefix | Description | Location |
 |------|--------|-------------|----------|
-| **Raw** | `v1_raw` | Unmodified source data (Parquet) | `med-data/v1_raw/ddi/` |
+| **Raw** | `v1_raw` | Unmodified source data (Parquet) | `med-data/v1_raw/ddi/`, `med-data/v1_raw/medications/`, `med-data/v1_raw/demographics/` |
 | **Clean** | `v2_clean` | Cleaned and validated data | `med-data/v2_clean/ddi/` |
 | **Features** | `v3_features` | Feature-engineered datasets | `med-data/v3_features/ddi/` |
 | **Models** | `v4_models` | Model outputs and predictions | `med-data/v4_models/ddi/` |
 
-**Source data** resides in: `med-sandbox/kaggle-data/ddi/`
+**Source data** originates from:
+- **DDI reference data**: MinIO `med-sandbox/kaggle-data/ddi/` (CSV/Parquet)
+- **Patient medications**: SQL Server CDWWork database (RxOut, BCMA schemas)
+- **Patient demographics**: SQL Server CDWWork database (SPatient schema)
 
 ## Setup
 
@@ -55,6 +59,8 @@ Data processing follows a versioned medallion architecture stored in MinIO:
 
 Ensure you've completed the shared infrastructure setup from **med-data**:
 - ✅ Docker Desktop running
+- ✅ SQL Server 2019 container (`sqlserver2019`) running
+- ✅ CDWWork database created and populated with sample data
 - ✅ MinIO container (`med-insight-minio`) running
 - ✅ Python 3.11 installed
 - ✅ Root `.env` file configured
@@ -74,15 +80,22 @@ pip freeze > requirements.txt
 
 ### Prepare Source Data
 
-1. Upload source CSV to MinIO:
+**1. SQL Server CDWWork Database** (from med-data subsystem):
+   - Ensure CDWWork database is created and populated
+   - Verify patient data in SPatient.SPatient table (15 patients)
+   - Verify medications in RxOut.RxOutpat and BCMA.BCMAMedicationLog tables
+   - See **med-data** README for database setup instructions
+
+**2. MinIO DDI Reference Data**:
    - Access MinIO Console: http://localhost:9001
    - Navigate to bucket: `med-sandbox`
    - Create folder path: `kaggle-data/ddi/`
    - Upload: `db_drug_interactions.csv`
 
-2. Create destination bucket structure:
+**3. Create MinIO destination bucket structure**:
    - Bucket: `med-data` (create if doesn't exist)
-   - Create folders: `v1_raw/ddi/`, `v2_clean/ddi/`, `v3_features/ddi/`, `v4_models/ddi/`
+   - Create folders: `v1_raw/ddi/`, `v1_raw/medications/`, `v1_raw/demographics/`
+   - Create folders: `v2_clean/ddi/`, `v3_features/ddi/`, `v4_models/ddi/`
 
 ## Running Notebooks
 

@@ -1,0 +1,7 @@
+PatientSID,Age,Gender,unique_medications,ddi_pair_count,total_ddi_risk_score,cluster_name
+1013,77,M,9,25.0,29.0,Elderly High-Risk Polypharmacy
+1015,82,M,10,18.0,21.0,Elderly High-Risk Polypharmacy
+1011,72,M,8,10.0,13.0,Elderly High-Risk Polypharmacy
+1012,68,F,7,8.0,9.0,Elderly High-Risk Polypharmacy
+1014,70,F,8,6.0,7.0,Elderly High-Risk Polypharmacy
+1005,44,M,3,2.0,4.0,Cluster 2
