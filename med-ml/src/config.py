@@ -49,11 +49,20 @@ V1_RAW_MEDICATIONS_PREFIX = "v1_raw/medications/"       # Unified medication dat
 V2_CLEAN_MEDICATIONS_PREFIX = "v2_clean/medications/"   # Cleaned medication data
 V3_FEATURES_MEDICATIONS_PREFIX = "v3_features/medications/"  # Feature-engineered
 
+# Data Paths - MIMIC-IV Community Care Integration (PhysioNet MIMIC-IV Demo)
+SOURCE_MIMIC_PATH = "mimic-data/hosp/"                  # MIMIC CSV files in med-sandbox
+V1_RAW_MIMIC_PREFIX = "v1_raw/mimic/"                   # MIMIC parquet files in med-data
+
+# Community Care Configuration
+COMMUNITY_CARE_STA3N = 999                              # Sta3n value for community care records
+COMMUNITY_CARE_SOURCE = "MIMIC-Community"               # SourceSystem identifier
+
 # Date Range Filtering (for medication data extraction)
-# Default: Last 365 days from today
+# Extended to include community care period (2025 full year for concurrent care)
+from datetime import date
 DEFAULT_DATE_RANGE_DAYS = 365
-DEFAULT_END_DATE = datetime.now().date()
-DEFAULT_START_DATE = DEFAULT_END_DATE - timedelta(days=DEFAULT_DATE_RANGE_DAYS)
+DEFAULT_END_DATE = date(2025, 12, 31)                   # Extended through 2025 for concurrent care
+DEFAULT_START_DATE = date(2025, 1, 1)                   # Start of concurrent care period
 
 # BCMA Action Type Filtering
 # Include only actual medication administrations (not held/refused)

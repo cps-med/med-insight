@@ -85,26 +85,37 @@ Before starting Phase 2, verify the following are in place:
 - Version: 2.2 (or latest available)
 
 **Download Instructions:**
-
+There are multiple ways to download the datafiles from PhysioNet, including direct download from the website. You can also run the `wget` command from the macOS Terminal (after installing wget via Homebrew).
 ```bash
-# Create directory for MIMIC demo data
+brew install wget
+
+wget --version
+```
+
+Create directory for MIMIC demo data:
+```bash
 mkdir -p ~/swdev/med/med-insight/med-data/physionet/mimic-iv-demo/hosp
 cd ~/swdev/med/med-insight/med-data/physionet/mimic-iv-demo/hosp
+```
 
-# Download required hosp module files (no authentication needed)
+Download required hosp module files (no authentication needed):
+```bash
 wget https://physionet.org/files/mimic-iv-demo/2.2/hosp/prescriptions.csv.gz
 wget https://physionet.org/files/mimic-iv-demo/2.2/hosp/pharmacy.csv.gz
 wget https://physionet.org/files/mimic-iv-demo/2.2/hosp/emar.csv.gz
 wget https://physionet.org/files/mimic-iv-demo/2.2/hosp/emar_detail.csv.gz
 wget https://physionet.org/files/mimic-iv-demo/2.2/hosp/patients.csv.gz
 wget https://physionet.org/files/mimic-iv-demo/2.2/hosp/admissions.csv.gz
+```
 
-# Unzip all files
+Unzip all files and verify
+```bash
 gunzip *.gz
 
-# Verify downloads
 ls -lh
 ```
+
+**Note:** The emar_detail.csv.gz file was corrupt and could not be unzipped. This file will not be used in the project integration.  
 
 **Storage Requirements:**
 - All hosp files compressed: ~50 MB
@@ -118,7 +129,7 @@ ls -lh
 | `prescriptions.csv` | ~19,000 | Medication orders (analogous to RxOut) |
 | `pharmacy.csv` | ~13,000 | Pharmacy dispensing records |
 | `emar.csv` | ~440,000 | Medication administrations (analogous to BCMA) |
-| `emar_detail.csv` | ~3.8M | Detailed administration records |
+| `emar_detail.csv` | N/A | **NOT AVAILABLE** - File was corrupt and unusable |
 | `patients.csv` | ~100 | Patient demographics |
 | `admissions.csv` | ~500 | Hospital admissions |
 
@@ -354,7 +365,7 @@ Represent veterans who transition between VA care and community care (MIMIC).
 
 #### Decision 2: Temporal Relationship Pattern
 
-**Option A: Community → VA Transition** (Recommended)
+**Option A: Community → VA Transition**
 - Community care occurs BEFORE current VA medications
 - Simulates veteran entering VA system
 - Timeline: Community care in 2024, VA care in 2025
@@ -366,16 +377,18 @@ Represent veterans who transition between VA care and community care (MIMIC).
 - Timeline: VA care early 2025, community care late 2025
 - Use case: Care coordination when VA refers to community
 
-**Option C: Concurrent Care**
+**Option C: Concurrent Care** (Recommended)
 - VA and community medications overlap in time
-- Simulates dual-system utilization
-- Timeline: Both sources active in 2025
-- Use case: Veteran using both VA and private insurance
+- Simulates dual-system utilization (most realistic scenario)
+- Timeline: Both sources active simultaneously in 2025
+- Use case: Veteran using both VA and private insurance simultaneously
 
-**Recommendation: Option A (Community → VA)**
-- Most realistic for new VA enrollees
-- Clear temporal separation simplifies analysis
-- Enables "before/after" medication comparison
+**Recommendation: Option C (Concurrent Care)** ✅
+- **Most clinically realistic**: Represents dual-eligible veterans (65+) using both Medicare and VA
+- **Highest DDI risk**: Creates "Blind Spot" where neither provider sees complete medication list
+- **Maximum ML value**: Addresses the most critical care coordination gap
+- **Reflects real-world**: Aligns with VA MISSION Act and Medicare dual-eligibility patterns
+- **Key insight**: Community and VA providers often unaware of each other's prescriptions
 
 #### Decision 3: Community Care Data Volume
 
@@ -389,10 +402,12 @@ Represent veterans who transition between VA care and community care (MIMIC).
 - Maintain polypharmacy patterns
 - Include some medication continuity (e.g., chronic meds present in both sources)
 
-**Timeline:**
-- **Duration**: 60-90 days of community care
-- **Date Range**: 2024-Q4 (October-December 2024)
-- **VA Care Start**: 2025-Q1 (January 2025+)
+**Timeline (Option C: Concurrent Care):**
+- **Duration**: 3-6 months of concurrent community care
+- **Date Range**: Throughout 2025 (simultaneous with VA care)
+- **VA Care**: Throughout 2025 (ongoing)
+- **Overlap**: Both VA and community medications active at same time
+- **Patient staggering**: Start community care at different times (Q1-Q2) for variety
 
 #### Decision 4: Medication Selection Strategy
 
@@ -481,13 +496,13 @@ CREATE TABLE Dim.MIMICPatientMapping (
 **Data Flow:**
 
 ```
-Source:     med-sandbox/mimic-data/*.csv          (Raw MIMIC CSVs)
+Source:     med-sandbox/mimic-data/hosp/*.csv      (Raw MIMIC CSVs)
             ↓
-Dataprep:   01d_dataprep_mimic.ipynb              (Convert to Parquet)
+Dataprep:   01d_dataprep_mimic.ipynb               (Convert to Parquet)
             ↓
-Storage:    med-data/v1_raw/mimic/*.parquet       (Processed MIMIC)
+Storage:    med-data/v1_raw/mimic/*.parquet        (Processed MIMIC)
             ↓
-Analysis:   mimic_patient_selection.ipynb         (Select & transform)
+Analysis:   mimic_patient_selection.ipynb          (Select & transform)
             ↓
 Integration: med-data/v1_raw/medications/*.parquet (Community care meds)
 ```
@@ -508,14 +523,14 @@ Storage:    med-data/v1_raw/ddi/*.parquet
 1. Open MinIO Console: http://localhost:9001
 2. Login with credentials from `.env`
 3. Navigate to bucket: `med-sandbox`
-4. Create folder: `mimic-data`
-5. Upload all CSV files from `~/swdev/med/med-insight/med-data/physionet/mimic-iv-demo/hosp/`
+4. Create folder: `mimic-data/hosp`
+5. Upload CSV files from `~/swdev/med/med-insight/med-data/physionet/mimic-iv-demo/hosp/`
    - prescriptions.csv
    - pharmacy.csv
    - emar.csv
-   - emar_detail.csv
    - patients.csv
    - admissions.csv
+   - Note: emar_detail.csv was corrupt and is not included
 
 **Option B: Using MinIO Client (mc)** - Command-line
 
@@ -526,17 +541,17 @@ brew install minio/stable/mc
 # Configure MinIO alias
 mc alias set myminio http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
 
-# Create mimic-data folder and upload files
+# Create mimic-data/hosp folder and upload files
 cd ~/swdev/med/med-insight/med-data/physionet/mimic-iv-demo/hosp
-mc cp prescriptions.csv myminio/med-sandbox/mimic-data/
-mc cp pharmacy.csv myminio/med-sandbox/mimic-data/
-mc cp emar.csv myminio/med-sandbox/mimic-data/
-mc cp emar_detail.csv myminio/med-sandbox/mimic-data/
-mc cp patients.csv myminio/med-sandbox/mimic-data/
-mc cp admissions.csv myminio/med-sandbox/mimic-data/
+mc cp prescriptions.csv myminio/med-sandbox/mimic-data/hosp/
+mc cp pharmacy.csv myminio/med-sandbox/mimic-data/hosp/
+mc cp emar.csv myminio/med-sandbox/mimic-data/hosp/
+mc cp patients.csv myminio/med-sandbox/mimic-data/hosp/
+mc cp admissions.csv myminio/med-sandbox/mimic-data/hosp/
+# Note: emar_detail.csv was corrupt and is not included
 
 # Verify upload
-mc ls myminio/med-sandbox/mimic-data/
+mc ls myminio/med-sandbox/mimic-data/hosp/
 ```
 
 **Option C: Using Python/boto3** - Programmatic
@@ -555,11 +570,12 @@ s3_client = boto3.client(
 
 # Upload files
 data_path = os.path.expanduser('~/swdev/med/med-insight/med-data/physionet/mimic-iv-demo/hosp')
-files = ['prescriptions.csv', 'pharmacy.csv', 'emar.csv', 'emar_detail.csv', 'patients.csv', 'admissions.csv']
+# Note: emar_detail.csv was corrupt and is excluded from upload
+files = ['prescriptions.csv', 'pharmacy.csv', 'emar.csv', 'patients.csv', 'admissions.csv']
 
 for file in files:
     file_path = f'{data_path}/{file}'
-    s3_client.upload_file(file_path, 'med-sandbox', f'mimic-data/{file}')
+    s3_client.upload_file(file_path, 'med-sandbox', f'mimic-data/hosp/{file}')
     print(f'✓ Uploaded {file}')
 ```
 
@@ -570,20 +586,22 @@ MinIO med-sandbox bucket:
 ├── kaggle-data/
 │   └── ddi/
 │       └── db_drug_interactions.csv
-└── mimic-data/                    # NEW
-    ├── prescriptions.csv
-    ├── pharmacy.csv
-    ├── emar.csv
-    ├── emar_detail.csv
-    ├── patients.csv
-    └── admissions.csv
+└── mimic-data/
+    └── hosp/
+        ├── prescriptions.csv
+        ├── pharmacy.csv
+        ├── emar.csv
+        ├── patients.csv
+        └── admissions.csv
+        # Note: emar_detail.csv was corrupt and is not included
 ```
 
 ### Step 8: Create New Dataprep Notebook for MIMIC
 
-**Create:** `med-ml/src/01d_dataprep_mimic.ipynb`
+**File:** `med-ml/src/01d_dataprep_mimic.ipynb` ✅ Created
 
 This notebook converts MIMIC CSV files to Parquet format, following the same pattern as `01a_dataprep_ddi.ipynb`.
+Processes 5 MIMIC-IV Demo tables: prescriptions, pharmacy, emar, patients, admissions.
 
 **Notebook Structure:**
 
@@ -598,7 +616,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
 logger.info("MIMIC-IV Data Preparation - CSV to Parquet Conversion")
-logger.info(f"Source: {SOURCE_BUCKET}/mimic-data/")
+logger.info(f"Source: {SOURCE_BUCKET}/mimic-data/hosp/")
 logger.info(f"Destination: {DEST_BUCKET}/v1_raw/mimic/")
 ```
 
@@ -614,13 +632,13 @@ s3 = S3FileSystem(
 )
 
 # Define source paths in med-sandbox
+# Note: unable to extract emar_details.csv file; not included in dictionary below
 mimic_files = {
-    'prescriptions': f's3://{SOURCE_BUCKET}/mimic-data/prescriptions.csv',
-    'pharmacy': f's3://{SOURCE_BUCKET}/mimic-data/pharmacy.csv',
-    'emar': f's3://{SOURCE_BUCKET}/mimic-data/emar.csv',
-    'emar_detail': f's3://{SOURCE_BUCKET}/mimic-data/emar_detail.csv',
-    'patients': f's3://{SOURCE_BUCKET}/mimic-data/patients.csv',
-    'admissions': f's3://{SOURCE_BUCKET}/mimic-data/admissions.csv'
+    'prescriptions': f's3://{SOURCE_BUCKET}/mimic-data/hosp/prescriptions.csv',
+    'pharmacy': f's3://{SOURCE_BUCKET}/mimic-data/hosp/pharmacy.csv',
+    'emar': f's3://{SOURCE_BUCKET}/mimic-data/hosp/emar.csv',
+    'patients': f's3://{SOURCE_BUCKET}/mimic-data/hosp/patients.csv',
+    'admissions': f's3://{SOURCE_BUCKET}/mimic-data/hosp/admissions.csv'
 }
 
 # Load each file
@@ -639,9 +657,9 @@ logger.info("=" * 60)
 logger.info(f"Prescriptions: {len(mimic_data['prescriptions']):,} records")
 logger.info(f"Pharmacy: {len(mimic_data['pharmacy']):,} records")
 logger.info(f"eMAR: {len(mimic_data['emar']):,} records")
-logger.info(f"eMAR Detail: {len(mimic_data['emar_detail']):,} records")
 logger.info(f"Patients: {len(mimic_data['patients']):,} records")
 logger.info(f"Admissions: {len(mimic_data['admissions']):,} records")
+logger.info(f"Note: eMAR Detail file was corrupt and excluded from dataset")
 
 # Check unique patients
 logger.info(f"\nUnique patients with prescriptions: {mimic_data['prescriptions']['subject_id'].nunique()}")
@@ -680,16 +698,16 @@ med-data bucket:
 │       ├── prescriptions.parquet
 │       ├── pharmacy.parquet
 │       ├── emar.parquet
-│       ├── emar_detail.parquet
 │       ├── patients.parquet
 │       └── admissions.parquet
+│       # Note: emar_detail.parquet not included (source file was corrupt)
 ```
 
 ### Step 9: Create Patient Selection and Integration Notebook
 
-**Create:** `med-ml/src/mimic_patient_selection.ipynb`
+**File:** `med-ml/src/mimic_patient_selection.ipynb` ✅ Created
 
-This notebook selects MIMIC patients matching VA patient profiles and transforms their medications to community care format.
+This notebook implements **Option C: Concurrent Care** - selects MIMIC patients matching VA patient profiles and transforms their medications to create concurrent community care scenarios.
 
 **Notebook Structure:**
 
@@ -754,25 +772,34 @@ logger.info("⚠ ACTION REQUIRED: Update MIMICSubjectID values with actual MIMIC
 ```
 
 ```python
-# Cell 4: Extract and Transform MIMIC Medications
+# Cell 4: Extract and Transform MIMIC Medications (Option C: Concurrent Care)
 # Select medications for mapped patients
 mimic_subjects = patient_mapping['MIMICSubjectID'].tolist()
 df_selected = df_mimic_rx[df_mimic_rx['subject_id'].isin(mimic_subjects)].copy()
 
 logger.info(f"Selected {len(df_selected):,} prescriptions for mapped patients")
 
-# Transform MIMIC dates from 2100s to 2024 (Community → VA transition)
-# MIMIC uses 2100-2200 range; shift to Oct-Dec 2024
-def shift_date_to_2024(date_str):
-    """Shift MIMIC dates (2100s) to 2024 Q4"""
+# Transform MIMIC dates from 2100s to 2025 for concurrent care
+# MIMIC uses 2100-2200 range; shift to 2025 to overlap with VA medications
+def shift_date_to_2025_concurrent(date_str, patient_offset_days=0):
+    """
+    Shift MIMIC dates (2100s) to 2025 for concurrent care simulation.
+    patient_offset_days: Stagger community care start by patient for variety
+    """
     if pd.isna(date_str):
         return None
     dt = pd.to_datetime(date_str)
-    # Shift year to 2024 and month to Q4
-    return dt.replace(year=2024, month=10 + (dt.month % 3))
+    # Replace year with 2025, maintaining month/day for seasonal distribution
+    new_date = dt.replace(year=2025)
+    # Add patient-specific offset to create variety in start dates
+    new_date = new_date + timedelta(days=patient_offset_days)
+    return new_date
 
-df_selected['starttime_2024'] = df_selected['starttime'].apply(shift_date_to_2024)
-df_selected['stoptime_2024'] = df_selected['stoptime'].apply(shift_date_to_2024)
+# Define patient-specific offsets to stagger community care start dates
+patient_offsets = {
+    1011: 0, 1012: 30, 1013: 60, 1014: 90, 1015: 120,
+    1016: 0, 1019: 45, 1021: 75, 1023: 105, 1024: 135
+}
 
 # Map MIMIC subject_id to VA PatientSID
 df_selected = df_selected.merge(
@@ -781,21 +808,40 @@ df_selected = df_selected.merge(
     right_on='MIMICSubjectID',
     how='left'
 )
+
+# Transform dates with patient-specific offsets (concurrent care)
+df_selected['starttime_2025'] = df_selected.apply(
+    lambda row: shift_date_to_2025_concurrent(
+        row['starttime'],
+        patient_offsets.get(row['VAPatientSID'], 0)
+    ),
+    axis=1
+)
+
+df_selected['stoptime_2025'] = df_selected.apply(
+    lambda row: shift_date_to_2025_concurrent(
+        row['stoptime'],
+        patient_offsets.get(row['VAPatientSID'], 0)
+    ),
+    axis=1
+)
+
+logger.info(f"Transformed dates to 2025 for concurrent care (overlapping with VA)")
 ```
 
 ```python
-# Cell 5: Create Community Care Medication Records
-# Transform to match VA medication schema
+# Cell 5: Create Community Care Medication Records (Option C: Concurrent)
+# Transform to match VA medication schema with 2025 dates
 
 df_community_care = pd.DataFrame({
     'PatientSID': df_selected['VAPatientSID'],
-    'Sta3n': 999,  # Community care indicator
+    'Sta3n': COMMUNITY_CARE_STA3N,  # 999 = Community care indicator
     'DrugNameWithoutDose': df_selected['drug'].str.extract(r'([A-Za-z\s]+)')[0].str.strip(),
     'DrugNameWithDose': df_selected['drug'],
-    'SourceSystem': 'MIMIC-Community',
-    'MedicationDateTime': df_selected['starttime_2024'],
-    'StartDate': df_selected['starttime_2024'],
-    'EndDate': df_selected['stoptime_2024'],
+    'SourceSystem': COMMUNITY_CARE_SOURCE,  # 'MIMIC-Community'
+    'MedicationDateTime': df_selected['starttime_2025'],  # 2025 for concurrent care
+    'StartDate': df_selected['starttime_2025'],
+    'EndDate': df_selected['stoptime_2025'],
     'Status': 'ACTIVE',
     'Route': df_selected['route'],
     'DosageOrdered': df_selected['dose_val_rx'].astype(str) + ' ' + df_selected['dose_unit_rx'].astype(str),
@@ -807,6 +853,7 @@ df_community_care = pd.DataFrame({
 
 logger.info(f"Created {len(df_community_care):,} community care medication records")
 logger.info(f"Date range: {df_community_care['StartDate'].min()} to {df_community_care['StartDate'].max()}")
+logger.info(f"All dates in 2025 (concurrent with VA medications)")
 ```
 
 ```python
@@ -841,60 +888,75 @@ logger.info("✅ Community care integration complete!")
 ```
 
 ```python
-# Cell 8: Validation
-# Verify integration quality
+# Cell 8: Validation (Option C: Concurrent Care)
+# Verify concurrent care overlap
 logger.info("\n" + "=" * 60)
-logger.info("VALIDATION CHECKS")
+logger.info("CONCURRENT CARE VALIDATION (OPTION C)")
 logger.info("=" * 60)
 
 # Check 1: Patient count with community care
-community_patients = df_combined[df_combined['SourceSystem'] == 'MIMIC-Community']['PatientSID'].unique()
+community_patients = df_combined[df_combined['SourceSystem'] == COMMUNITY_CARE_SOURCE]['PatientSID'].unique()
 logger.info(f"✓ Patients with community care: {len(community_patients)}")
 logger.info(f"  Expected: 10, Got: {len(community_patients)}")
 
-# Check 2: Temporal separation (community before VA)
+# Check 2: Temporal overlap (concurrent care, not sequential)
+patients_with_overlap = 0
 for patient in community_patients:
     patient_meds = df_combined[df_combined['PatientSID'] == patient]
-    community_start = patient_meds[patient_meds['SourceSystem'] == 'MIMIC-Community']['StartDate'].min()
-    va_start = patient_meds[patient_meds['SourceSystem'].isin(['RxOut', 'BCMA'])]['StartDate'].min()
+    community = patient_meds[patient_meds['SourceSystem'] == COMMUNITY_CARE_SOURCE]
+    va = patient_meds[patient_meds['SourceSystem'].isin(['RxOut', 'BCMA'])]
 
-    if pd.notna(community_start) and pd.notna(va_start):
-        if community_start >= va_start:
-            logger.warning(f"  ⚠ Patient {patient}: Community care NOT before VA care")
+    if len(community) > 0 and len(va) > 0:
+        comm_start = community['StartDate'].min()
+        comm_end = community['EndDate'].max()
+        va_start = va['MedicationDateTime'].min()
+        va_end = va['MedicationDateTime'].max()
+
+        # Check for temporal overlap (NOT separation)
+        # Overlap exists if NOT (comm_end < va_start OR va_end < comm_start)
+        has_overlap = not (comm_end < va_start or va_end < comm_start)
+
+        if has_overlap:
+            patients_with_overlap += 1
+            logger.info(f"  ✓ Patient {patient}: CONCURRENT CARE (medications overlap in 2025)")
         else:
-            logger.info(f"  ✓ Patient {patient}: Community ({community_start.date()}) → VA ({va_start.date()})")
+            logger.warning(f"  ⚠ Patient {patient}: NO OVERLAP (sequential, not concurrent)")
 
-logger.info("\n✅ Integration validation complete!")
+logger.info(f"\n{'✅' if patients_with_overlap == len(community_patients) else '⚠️'} Concurrent care validation: {patients_with_overlap}/{len(community_patients)} patients with overlap")
+logger.info("Expected: All patients should have overlapping VA and community medications in 2025")
 ```
 
-**Notes:**
-- MIMIC dates are shifted from 2100-2200 range to Oct-Dec 2024 (Q4 2024)
-- VA care starts in 2025 (Q1 2025), creating clear temporal separation
+**Notes (Option C: Concurrent Care):**
+- MIMIC dates are shifted from 2100-2200 range to throughout 2025
+- VA care also active throughout 2025, creating **temporal overlap**
+- Patient-specific offsets stagger community care start dates for variety
 - `Sta3n = 999` marks community care records
+- `SourceSystem = 'MIMIC-Community'` identifies community medications
 - Patient mapping can be refined based on actual MIMIC patient demographics
 
 ### Step 9B: Update Configuration File
 
-**Update:** `med-ml/src/config.py`
+**File:** `med-ml/src/config.py` ✅ Updated
 
-Add the following configuration constants to support MIMIC integration:
+The following configuration constants have been added to support MIMIC integration (Option C: Concurrent Care):
 
 ```python
 # =========================================================================
-# MIMIC-IV Community Care Integration Configuration
+# MIMIC-IV Community Care Integration Configuration (Option C: Concurrent)
 # =========================================================================
 
 # MIMIC source and destination paths
-SOURCE_MIMIC_PATH = "mimic-data/"
-V1_RAW_MIMIC_PREFIX = "v1_raw/mimic/"
+SOURCE_MIMIC_PATH = "mimic-data/hosp/"      # MIMIC CSV files in med-sandbox
+V1_RAW_MIMIC_PREFIX = "v1_raw/mimic/"       # MIMIC parquet files in med-data
 
-# Community care indicator
-COMMUNITY_CARE_STA3N = 999  # Sta3n value to identify community care records
+# Community care configuration
+COMMUNITY_CARE_STA3N = 999                  # Sta3n value for community care records
+COMMUNITY_CARE_SOURCE = "MIMIC-Community"   # SourceSystem identifier
 
-# Extended date range to include community care (Q4 2024)
+# Extended date range for concurrent care (both VA and community active in 2025)
 from datetime import date
-DEFAULT_START_DATE = date(2024, 1, 1)   # Includes Q4 2024 community care
-DEFAULT_END_DATE = date(2025, 12, 31)   # Extends through VA care period
+DEFAULT_START_DATE = date(2025, 1, 1)       # Start of concurrent care period
+DEFAULT_END_DATE = date(2025, 12, 31)       # Extended through 2025 for concurrent care
 ```
 
 **Note:** These configuration constants centralize all MIMIC-related settings for consistent use across notebooks.
@@ -1605,10 +1667,10 @@ Consider alternatives to MIMIC-IV:
 
 ## Document Version
 
-- **Version**: 1.3
+- **Version**: 2.0 🎯
 - **Created**: 2024-11-29
-- **Last Updated**: 2025-01-29
-- **Status**: Phase 2 Planning - Ready for Implementation (Phase 1 Complete)
+- **Last Updated**: 2025-12-02
+- **Status**: ✅ **Option C (Concurrent Care) Implementation Complete**
 - **Major Changes**:
   - v1.0 - Initial guide with full MIMIC-IV credentialing approach
   - v1.1 - Updated to prioritize MIMIC-IV Demo (no credentialing required)
@@ -1620,9 +1682,25 @@ Consider alternatives to MIMIC-IV:
     - Added comprehensive Troubleshooting section (6 common issues)
     - Replaced execution strategy with tiered approach (Integration → Validation → Re-analysis)
     - Clarified 25-patient cohort composition (10 base + 5 elderly + 10 expansion)
+  - v1.4 - **MIMIC-IV Demo data uploaded to MinIO**:
+    - Updated all references to reflect data location: `med-sandbox/mimic-data/hosp/`
+    - Documented emar_detail.csv.gz file corruption and exclusion from project
+    - Updated all code examples, MinIO structures, and notebook cells to exclude emar_detail
+    - Status updated to reflect Step 7 completion (data in MinIO)
+  - **v2.0 - OPTION C (CONCURRENT CARE) IMPLEMENTATION** ✅:
+    - **Changed recommendation from Option A to Option C** (concurrent care most realistic)
+    - Created `01d_dataprep_mimic.ipynb` - MIMIC CSV to Parquet conversion
+    - Created `mimic_patient_selection.ipynb` - Option C concurrent care integration
+    - Updated `config.py` with MIMIC and concurrent care configuration constants
+    - **All date transformations updated to 2025 for temporal overlap**
+    - **Validation logic updated to check for concurrent overlap** (not sequential separation)
+    - Updated all code examples throughout guide to reflect Option C approach
+    - Added clinical rationale for concurrent care (dual-eligible veterans, "Blind Spot" DDI detection)
+    - Ready for execution: All notebooks created and documented
 - **Architecture**: MinIO medallion (med-sandbox → v1_raw → integration via Parquet)
-- **Next Review**: After MIMIC-IV Demo integration complete
+- **Approach**: **Option C - Concurrent Care** (VA + community medications active simultaneously in 2025)
+- **Next Step**: Execute pipeline starting with 01d_dataprep_mimic.ipynb
 
 ---
 
-**Ready to proceed with PhysioNet MIMIC-IV Demo integration - Start today!**
+**✅ Ready to execute Option C (Concurrent Care) integration - All notebooks created!**
