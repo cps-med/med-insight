@@ -97,7 +97,7 @@ python -c "import pandas, s3fs, pyarrow, pyodbc; print('Dependencies OK')"
 | `01b_dataprep_medications.ipynb` | CDWWork RxOut, BCMA | v1_raw/medications/*.parquet | ~1 min |
 | `01c_dataprep_demographics.ipynb` | CDWWork SPatient | v1_raw/demographics/*.parquet | ~30 sec |
 | `01d_dataprep_mimic.ipynb` | MIMIC-IV CSVs | v1_raw/mimic/*.parquet | ~1 min |
-| `mimic_patient_selection.ipynb` | v1_raw/mimic/ + v1_raw/medications/ | v1_raw/medications/*.parquet (updated) | ~1 min |
+| `01e_mimic_patient_selection.ipynb` | v1_raw/mimic/ + v1_raw/medications/ | v1_raw/medications/*.parquet (updated) | ~1 min |
 
 ### Phase 2: Analysis Pipeline (Notebooks 02-06)
 
@@ -202,10 +202,10 @@ jupyter nbconvert --to notebook --execute 01d_dataprep_mimic.ipynb
 
 ⚠️ **IMPORTANT**: Before running this notebook, you must update patient mapping!
 
-**Required Action**: Open `mimic_patient_selection.ipynb` and update MIMICSubjectID values
+**Required Action**: Open `01e_mimic_patient_selection.ipynb` and update MIMICSubjectID values
 
 ```python
-# In Cell 4 of mimic_patient_selection.ipynb, update this section:
+# In Cell 4 of 01e_mimic_patient_selection.ipynb, update this section:
 patient_mapping = pd.DataFrame([
     {'VAPatientSID': 1011, 'MIMICSubjectID': '[TBD]', ...},  # ← Update [TBD]
     {'VAPatientSID': 1012, 'MIMICSubjectID': '[TBD]', ...},  # ← Update [TBD]
@@ -214,7 +214,7 @@ patient_mapping = pd.DataFrame([
 ```
 
 **How to find MIMIC subject IDs**:
-1. Run the exploration cell in `mimic_patient_selection.ipynb` (Cell 3)
+1. Run the exploration cell in `01e_mimic_patient_selection.ipynb` (Cell 3)
 2. It displays MIMIC patients with prescription counts
 3. Select 10 MIMIC subject_ids with 5-15 prescriptions each
 4. Update the patient_mapping DataFrame with these IDs
@@ -224,11 +224,11 @@ patient_mapping = pd.DataFrame([
 **Execute the notebook**:
 ```bash
 # Option 1: Interactive (recommended for first run)
-jupyter lab mimic_patient_selection.ipynb
+jupyter lab 01e_mimic_patient_selection.ipynb
 # Run cells sequentially, verify mapping, then execute all
 
 # Option 2: Batch execution (after mapping verified)
-jupyter nbconvert --to notebook --execute mimic_patient_selection.ipynb
+jupyter nbconvert --to notebook --execute 01e_mimic_patient_selection.ipynb
 ```
 
 **Expected Output**:
@@ -448,11 +448,11 @@ cd ~/swdev/med/med-insight/med-data/physionet/mimic-iv-demo/hosp
 
 ### Issue 4: Patient Mapping [TBD] Values
 
-**Symptoms**: Warning in `mimic_patient_selection.ipynb` about placeholder values
+**Symptoms**: Warning in `01e_mimic_patient_selection.ipynb` about placeholder values
 
 **Solution**:
 ```python
-# Open mimic_patient_selection.ipynb in Jupyter
+# Open 01e_mimic_patient_selection.ipynb in Jupyter
 # Run Cell 3 (MIMIC patient exploration)
 # Note top 10 MIMIC subject_ids with 5-15 prescriptions
 # Update Cell 4 patient_mapping with actual IDs
@@ -474,7 +474,7 @@ patient_mapping = pd.DataFrame([
 **Symptoms**: "NO OVERLAP (sequential, not concurrent)" warnings
 
 **Solution**:
-1. Check date transformation logic in `mimic_patient_selection.ipynb`
+1. Check date transformation logic in `01e_mimic_patient_selection.ipynb`
 2. Verify `shift_date_to_2025_concurrent()` using 2025 (not 2024)
 3. Verify patient_offsets being applied
 4. Check VA medication dates in CDWWork:
@@ -494,11 +494,11 @@ patient_mapping = pd.DataFrame([
 
 **Solution**:
 ```python
-# This means mimic_patient_selection.ipynb didn't write successfully
+# This means 01e_mimic_patient_selection.ipynb didn't write successfully
 # or wasn't run at all
 
 # Solution:
-# 1. Re-run mimic_patient_selection.ipynb
+# 1. Re-run 01e_mimic_patient_selection.ipynb
 # 2. Verify last cell shows: "✅ Community care integration complete!"
 # 3. Check MinIO med-data/v1_raw/medications/patient_medications.parquet
 #    file timestamp (should be recent)
@@ -567,7 +567,7 @@ print("✅ Checkpoint 2 passed: MIMIC data converted to Parquet")
 
 ---
 
-### ✅ Checkpoint 3: After mimic_patient_selection (Concurrent Care Integrated)
+### ✅ Checkpoint 3: After 01e_mimic_patient_selection (Concurrent Care Integrated)
 
 ```python
 import pandas as pd
@@ -639,7 +639,7 @@ jupyter nbconvert --to notebook --execute 01c_dataprep_demographics.ipynb
 jupyter nbconvert --to notebook --execute 01d_dataprep_mimic.ipynb
 
 # Phase 1e: Community Care Integration (interactive recommended)
-jupyter lab mimic_patient_selection.ipynb
+jupyter lab 01e_mimic_patient_selection.ipynb
 # Update patient mapping, then execute all cells
 
 # Phase 2: Analysis

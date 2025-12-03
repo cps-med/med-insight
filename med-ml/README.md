@@ -31,10 +31,12 @@ med-ml/
 │   ├── 04_features.ipynb                 # ✅ Feature engineering
 │   ├── 05_clustering.ipynb               # 🔜 Patient risk clustering (pending)
 │   └── 06_analysis.ipynb                 # 🔜 Results analysis (pending)
-├── FEATURE_ENGINEERING_GUIDE.md          # Guide to feature engineering approach
-├── DEMOGRAPHICS_IMPLEMENTATION.md        # Demographics data implementation details
-├── CLUSTERING_AND_ANALYSIS_GUIDE.md      # Guide for clustering and analysis phase
-├── PHYSIONET_INTEGRATION_GUIDE.md        # PhysioNet MIMIC-IV community care integration plan
+├── docs/                                 # Methodology documentation
+│   ├── FEATURE_ENGINEERING_GUIDE.md      # Feature engineering approach
+│   ├── DEMOGRAPHICS_IMPLEMENTATION.md    # Demographics data implementation
+│   ├── CLUSTERING_AND_ANALYSIS_GUIDE.md  # Clustering and analysis methodology
+│   ├── PHYSIONET_INTEGRATION_GUIDE.md    # PhysioNet MIMIC-IV integration plan
+│   └── PIPELINE_EXECUTION_GUIDE.md       # Step-by-step execution guide
 └── README.md                             # This file
 ```
 

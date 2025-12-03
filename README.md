@@ -71,7 +71,7 @@ GitHub Issues is used to track and manage development work across all four subsy
 
 ## Additional Documentation
 For detailed technical guidance and methodology documentation, see the **med-ml** subsystem:
-- **FEATURE_ENGINEERING_GUIDE.md** - Feature engineering approach for DDI risk analysis
-- **DEMOGRAPHICS_IMPLEMENTATION.md** - Patient demographics integration details
-- **CLUSTERING_AND_ANALYSIS_GUIDE.md** - Patient risk clustering strategy and analysis methodology
-- **PHYSIONET_INTEGRATION_GUIDE.md** - PhysioNet MIMIC-IV community care data integration plan
+- **med-ml/docs/FEATURE_ENGINEERING_GUIDE.md** - Feature engineering approach for DDI risk analysis
+- **med-ml/docs/DEMOGRAPHICS_IMPLEMENTATION.md** - Patient demographics integration details
+- **med-ml/docs/CLUSTERING_AND_ANALYSIS_GUIDE.md** - Patient risk clustering strategy and analysis methodology
+- **med-ml/docs/PHYSIONET_INTEGRATION_GUIDE.md** - PhysioNet MIMIC-IV community care data integration plan

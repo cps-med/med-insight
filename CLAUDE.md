@@ -317,10 +317,10 @@ Both databases run in the same Docker container but maintain logical separation.
 - `06_analysis.ipynb` - Results analysis (pending)
 
 **med-ml documentation**:
-- `FEATURE_ENGINEERING_GUIDE.md` - Feature engineering methodology
-- `DEMOGRAPHICS_IMPLEMENTATION.md` - Demographics integration details
-- `CLUSTERING_AND_ANALYSIS_GUIDE.md` - Clustering strategy and analysis guide
-- `PHYSIONET_INTEGRATION_GUIDE.md` - PhysioNet MIMIC-IV community care integration plan (Phase 2)
+- `med-ml/docs/FEATURE_ENGINEERING_GUIDE.md` - Feature engineering methodology
+- `med-ml/docs/DEMOGRAPHICS_IMPLEMENTATION.md` - Demographics integration details
+- `med-ml/docs/CLUSTERING_AND_ANALYSIS_GUIDE.md` - Clustering strategy and analysis guide
+- `med-ml/docs/PHYSIONET_INTEGRATION_GUIDE.md` - PhysioNet MIMIC-IV community care integration plan (Phase 2)
 
 ## Environment Configuration
 
@@ -509,7 +509,7 @@ pip install -r requirements.txt
   - `med-ml/README.md` - AI/ML layer with DDI risk analysis (feature engineering complete, clustering in progress)
   - `med-view/README.md` - Web dashboard setup (early stage)
 - **med-ml Methodology Guides**: Comprehensive technical documentation
-  - `FEATURE_ENGINEERING_GUIDE.md` - Feature engineering approach for DDI risk analysis
-  - `DEMOGRAPHICS_IMPLEMENTATION.md` - Patient demographics integration details
-  - `CLUSTERING_AND_ANALYSIS_GUIDE.md` - Patient risk clustering strategy and analysis methodology
-  - `PHYSIONET_INTEGRATION_GUIDE.md` - PhysioNet MIMIC-IV community care integration plan (Phase 2)
+  - `med-ml/docs/FEATURE_ENGINEERING_GUIDE.md` - Feature engineering approach for DDI risk analysis
+  - `med-ml/docs/DEMOGRAPHICS_IMPLEMENTATION.md` - Patient demographics integration details
+  - `med-ml/docs/CLUSTERING_AND_ANALYSIS_GUIDE.md` - Patient risk clustering strategy and analysis methodology
+  - `med-ml/docs/PHYSIONET_INTEGRATION_GUIDE.md` - PhysioNet MIMIC-IV community care integration plan (Phase 2)

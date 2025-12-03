@@ -453,30 +453,34 @@ Map MIMIC fields to existing CDWWork schema:
 - New: `'MIMIC-Prescription'`, `'MIMIC-eMAR'`
 - Or simplified: `'MIMIC-Community'`
 
-**Patient Mapping Table:**
+**Patient Mapping Approach:**
 
-Create new table: `Dim.MIMICPatientMapping`
+⚠️ **IMPORTANT: No database table needed!**
 
-```sql
-CREATE TABLE Dim.MIMICPatientMapping (
-    MappingID INT PRIMARY KEY,
-    VAPatientSID INT NOT NULL,           -- Links to SPatient.SPatient
-    MIMICSubjectID INT NOT NULL,         -- Original MIMIC subject_id
-    MappingRationale VARCHAR(500),       -- Why this pairing (age, gender, conditions)
-    DateMapped DATE,
-    FOREIGN KEY (VAPatientSID) REFERENCES SPatient.SPatient(PatientSID)
-);
+Patient mapping is handled in **Python DataFrames** within `mimic_patient_selection.ipynb`:
+- Mapping defined in-memory in notebook Cell 4
+- No SQL table creation required
+- Uses MinIO medallion pattern (Parquet files), not database tables
+
+**Example Mapping (In Python, not SQL):**
+
+```python
+# In mimic_patient_selection.ipynb Cell 4:
+patient_mapping = pd.DataFrame([
+    {'VAPatientSID': 1011, 'MIMICSubjectID': [TBD], 'Rationale': '72yo male, CHF, AFib'},
+    {'VAPatientSID': 1012, 'MIMICSubjectID': [TBD], 'Rationale': '68yo female, anticoagulation'},
+    {'VAPatientSID': 1013, 'MIMICSubjectID': [TBD], 'Rationale': '77yo male, complex cardiac'},
+    # ... 10 patients total
+])
 ```
 
-**Example Mappings (After Patient Selection):**
+**Rationale for Python Approach:**
+- ✅ Consistent with medallion architecture (Parquet/MinIO storage)
+- ✅ No database schema changes needed
+- ✅ Easier to iterate and update mappings
+- ✅ Mapping travels with the data (documented in notebook)
 
-| VAPatientSID | MIMICSubjectID | Rationale |
-|--------------|----------------|-----------|
-| 1011 | [TBD] | 72yo male, CHF, AFib |
-| 1012 | [TBD] | 68yo female, anticoagulation |
-| 1013 | [TBD] | 77yo male, complex cardiac |
-
-*Note: MIMICSubjectID values to be determined during Step 2 (Initial Data Exploration)*
+*Note: Update MIMICSubjectID values in the notebook after exploring MIMIC patient data*
 
 ---
 
@@ -705,7 +709,7 @@ med-data bucket:
 
 ### Step 9: Create Patient Selection and Integration Notebook
 
-**File:** `med-ml/src/mimic_patient_selection.ipynb` ✅ Created
+**File:** `med-ml/src/01e_mimic_patient_selection.ipynb` ✅ Created
 
 This notebook implements **Option C: Concurrent Care** - selects MIMIC patients matching VA patient profiles and transforms their medications to create concurrent community care scenarios.
 
@@ -965,22 +969,22 @@ DEFAULT_END_DATE = date(2025, 12, 31)       # Extended through 2025 for concurre
 
 **No changes needed to existing notebooks!**
 
-The beauty of the MinIO medallion approach is that `mimic_patient_selection.ipynb` (Step 9) replaces the `v1_raw/medications/patient_medications.parquet` file with the combined dataset. All downstream notebooks automatically work with the new data.
+The beauty of the MinIO medallion approach is that `01e_mimic_patient_selection.ipynb` (Step 9) replaces the `v1_raw/medications/patient_medications.parquet` file with the combined dataset. All downstream notebooks automatically work with the new data.
 
 **Workflow:**
 
 ```
-1. Run 01a_dataprep_ddi.ipynb          (DDI data - unchanged)
-2. Run 01b_dataprep_medications.ipynb  (VA meds only - unchanged)
-3. Run 01c_dataprep_demographics.ipynb (Demographics - unchanged)
-4. Run 01d_dataprep_mimic.ipynb        (NEW - MIMIC CSV → Parquet)
-5. Run mimic_patient_selection.ipynb   (NEW - Integrate community care)
+1. Run 01a_dataprep_ddi.ipynb            (DDI data - unchanged)
+2. Run 01b_dataprep_medications.ipynb    (VA meds only - unchanged)
+3. Run 01c_dataprep_demographics.ipynb   (Demographics - unchanged)
+4. Run 01d_dataprep_mimic.ipynb          (NEW - MIMIC CSV → Parquet)
+5. Run 01e_mimic_patient_selection.ipynb (NEW - Integrate community care)
    ↳ Replaces v1_raw/medications/patient_medications.parquet with combined VA + Community dataset
-6. Run 02_explore.ipynb                (Automatically sees 3 sources: RxOut, BCMA, MIMIC-Community)
-7. Run 03_clean.ipynb                  (Works with combined data)
-8. Run 04_features.ipynb               (Enhanced features with community care)
-9. Run 05_clustering.ipynb             (Better clustering with dual-source data)
-10. Run 06_analysis.ipynb              (Care coordination insights)
+6. Run 02_explore.ipynb                  (Automatically sees 3 sources: RxOut, BCMA, MIMIC-Community)
+7. Run 03_clean.ipynb                    (Works with combined data)
+8. Run 04_features.ipynb                 (Enhanced features with community care)
+9. Run 05_clustering.ipynb               (Better clustering with dual-source data)
+10. Run 06_analysis.ipynb                (Care coordination insights)
 ```
 
 **Optional: Enhanced Analysis in 02_explore.ipynb**
@@ -1016,7 +1020,7 @@ if 'MIMIC-Community' in df_medications['SourceSystem'].values:
         logger.info(f"  Community meds: {len(community)} ({community['StartDate'].min().date()} to {community['StartDate'].max().date()})")
         logger.info(f"  VA meds: {len(va)} ({va['MedicationDateTime'].min().date() if len(va) > 0 else 'N/A'} onward)")
 else:
-    logger.info("\n⚠ No community care data found. Run mimic_patient_selection.ipynb first.")
+    logger.info("\n⚠ No community care data found. Run 01e_mimic_patient_selection.ipynb first.")
 ```
 
 ---
@@ -1025,7 +1029,7 @@ else:
 
 ### Step 11: Validate Integration
 
-**Validation is built into `mimic_patient_selection.ipynb` (Step 9, Cell 8), but you can also validate in notebooks:**
+**Validation is built into `01e_mimic_patient_selection.ipynb` (Step 9, Cell 8), but you can also validate in notebooks:**
 
 **Create validation notebook or add cells to 02_explore.ipynb:**
 
@@ -1258,8 +1262,8 @@ code ~/swdev/med/med-insight/med-ml/src/
 
 | Notebook | Before (Phase 1) | After (Phase 2) | Key Changes |
 |----------|------------------|-----------------|-------------|
-| **01d** | N/A | New notebook | Creates v1_raw/mimic/ with 6 Parquet files |
-| **mimic_selection** | N/A | New notebook | Replaces v1_raw/medications/ with combined dataset |
+| **01d** | N/A | New notebook | Creates v1_raw/mimic/ with 5 Parquet files |
+| **01e** | N/A | New notebook | Replaces v1_raw/medications/ with combined dataset |
 | **02_explore** | 2 sources (RxOut, BCMA)<br>~62 meds, 25 patients | 3 sources (RxOut, BCMA, MIMIC-Community)<br>~100-120 meds, 25 patients | +1 source system, +40-60 community meds |
 | **03_clean** | VA-only cleaning | Same cleaning rules applied to all 3 sources | Automatic - no changes needed |
 | **04_features** | VA-only features | Enhanced with temporal transition features | Richer care coordination patterns |
@@ -1341,11 +1345,11 @@ for patient in community_patients:
    wget https://physionet.org/files/mimic-iv-demo/2.2/hosp/prescriptions.csv.gz
    # ... (see Step 1 for all files)
    ```
-3. ⏳ **Initial exploration** - Run Step 2 Python exploration code
-4. ⏳ **Make design decisions**:
-   - Confirm 10 patients for community care integration
-   - Choose temporal pattern (recommend: Community → VA)
-   - Decide on medication volume per patient (5-8 meds each)
+3. ✅ **Initial exploration** - MIMIC-IV Demo data uploaded to MinIO
+4. ✅ **Design decisions made**:
+   - Confirmed 10 patients for community care integration
+   - **Chosen temporal pattern: Option C (Concurrent Care)** ✅
+   - Medication volume: 5-8 meds per patient matching VA complexity
 
 ### Week 1 - Patient Selection
 
@@ -1361,23 +1365,25 @@ for patient in community_patients:
    - Plan medication changes (some discontinued, some new)
    - Include DDI scenarios across community/VA boundary
 
-### Week 2 - Implementation
+### Week 2 - Implementation (Python Notebooks - No SQL Scripts Needed)
 
-9. ⏳ **Create patient mapping script** - `create_mimic_patient_mapping.sql`
-10. ⏳ **Extract MIMIC medication data** - Get medications for selected patients
-11. ⏳ **Build integration script** - Create `add_community_care_mimic.sql`
-    - Transform MIMIC dates from 2100s → 2024
-    - Map MIMIC drug names to CDWWork format
-    - Set Sta3n = 999 for community care flag
-12. ⏳ **Load and test** - Execute scripts, verify data in database
+9. ✅ **Created `01d_dataprep_mimic.ipynb`** - Converts MIMIC CSV to Parquet
+10. ✅ **Created `01e_mimic_patient_selection.ipynb`** - Integrates community care (Option C)
+    - Patient mapping done in Python DataFrame (in-memory, no database table)
+    - Transform MIMIC dates from 2100s → 2025 (concurrent with VA)
+    - Map MIMIC drug names to VA schema format
+    - Set Sta3n = 999 and SourceSystem = 'MIMIC-Community'
+    - Replaces v1_raw/medications/patient_medications.parquet with combined dataset
+11. ⏳ **Update patient mapping** - Edit `01e_mimic_patient_selection.ipynb` Cell 4 with actual MIMIC subject_ids
+12. ⏳ **Execute notebooks** - Run 01d_dataprep_mimic.ipynb and 01e_mimic_patient_selection.ipynb
 
 ### Week 2-3 - Validation & Analysis
 
-13. ⏳ **Update notebooks** - Modify `01b_dataprep_medications.ipynb` for 3 sources
-14. ⏳ **Re-run pipeline** - Execute notebooks 01b through 06
-15. ⏳ **Validate integration** - Check patient counts, medication counts, dates
-16. ⏳ **Analyze results** - Care coordination patterns, cross-source DDIs
-17. ✅ **Phase 2 Complete!** - Community care integration successful
+13. ✅ **Notebooks ready** - No changes needed to 01b-06 (automatic via MinIO medallion)
+14. ⏳ **Run complete pipeline** - Execute notebooks 01a through 06
+15. ⏳ **Validate integration** - Verify 3 sources, 10 concurrent care patients, overlap in 2025
+16. ⏳ **Analyze results** - Concurrent DDI patterns, "Blind Spot" scenarios
+17. ⏳ **Phase 2 Complete!** - Community care integration successful
 
 ### Timeline Summary
 
@@ -1690,13 +1696,17 @@ Consider alternatives to MIMIC-IV:
   - **v2.0 - OPTION C (CONCURRENT CARE) IMPLEMENTATION** ✅:
     - **Changed recommendation from Option A to Option C** (concurrent care most realistic)
     - Created `01d_dataprep_mimic.ipynb` - MIMIC CSV to Parquet conversion
-    - Created `mimic_patient_selection.ipynb` - Option C concurrent care integration
+    - Created `01e_mimic_patient_selection.ipynb` - Option C concurrent care integration
     - Updated `config.py` with MIMIC and concurrent care configuration constants
     - **All date transformations updated to 2025 for temporal overlap**
     - **Validation logic updated to check for concurrent overlap** (not sequential separation)
     - Updated all code examples throughout guide to reflect Option C approach
     - Added clinical rationale for concurrent care (dual-eligible veterans, "Blind Spot" DDI detection)
     - Ready for execution: All notebooks created and documented
+  - **v2.1 - Notebook Numbering Consistency**:
+    - Renamed `mimic_patient_selection.ipynb` → `01e_mimic_patient_selection.ipynb`
+    - Maintains Phase 1 data preparation grouping (01a/b/c/d/e)
+    - All documentation updated to reflect new naming
 - **Architecture**: MinIO medallion (med-sandbox → v1_raw → integration via Parquet)
 - **Approach**: **Option C - Concurrent Care** (VA + community medications active simultaneously in 2025)
 - **Next Step**: Execute pipeline starting with 01d_dataprep_mimic.ipynb
